@@ -528,7 +528,3 @@ Things I would build next, ranked by leverage:
    to detect routing regressions. With more time: 30+ cases across
    resolve / readiness / similarity / aggregation, plus a CI gate that
    fails when pass-rate drops more than ~10% between commits.
-
-6. **Operational metrics.** Lag dashboard for "when was the last
-   successful ingest?" and "how stale is the graph relative to Mongo
-   updates?"
