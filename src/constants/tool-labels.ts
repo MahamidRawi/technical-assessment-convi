@@ -1,0 +1,43 @@
+import type { AgentName } from '../types/stream.types';
+
+export const TOOL_TO_AGENT: Record<string, AgentName> = {
+  findCase: 'reasoner',
+  getCaseGraphContext: 'reasoner',
+  getCaseOverview: 'reasoner',
+  getCaseEvidence: 'reasoner',
+  getCaseDocuments: 'reasoner',
+  getCaseCommunications: 'reasoner',
+  findSimilarCases: 'reasoner',
+  findSameStageLeaders: 'reasoner',
+  getReadinessSignals: 'reasoner',
+  getCaseInjuryProfile: 'reasoner',
+  getStageTimeline: 'reasoner',
+  benchmarkAgainstStage: 'reasoner',
+  searchCases: 'reasoner',
+  portfolioAggregates: 'reasoner',
+  rankCasesByStageTransitionTime: 'reasoner',
+  deriveReadinessPattern: 'reasoner',
+  compareCaseToReadinessPattern: 'reasoner',
+  estimateTimeToStage: 'reasoner',
+};
+
+export const TOOL_LABELS: Record<string, string> = {
+  findCase: 'Resolve case',
+  getCaseGraphContext: 'Case graph context',
+  getCaseOverview: 'Case overview',
+  getCaseEvidence: 'Evidence summary',
+  getCaseDocuments: 'List documents',
+  getCaseCommunications: 'Case communications',
+  findSimilarCases: 'Similar cases',
+  findSameStageLeaders: 'Same-stage reference cases',
+  getReadinessSignals: 'Auxiliary case metadata',
+  getCaseInjuryProfile: 'Injury profile',
+  getStageTimeline: 'Stage timeline',
+  benchmarkAgainstStage: 'Stage benchmark',
+  searchCases: 'Search cases by filters',
+  portfolioAggregates: 'Portfolio aggregation',
+  rankCasesByStageTransitionTime: 'Stage transition timing',
+  deriveReadinessPattern: 'Historical readiness pattern',
+  compareCaseToReadinessPattern: 'Case vs readiness pattern',
+  estimateTimeToStage: 'Estimate time to stage',
+};
