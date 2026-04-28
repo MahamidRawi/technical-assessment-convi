@@ -20,6 +20,7 @@ const CONSTRAINTS: Array<[string, string]> = [
   ['StageEvent.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (se:StageEvent) REQUIRE se.key IS UNIQUE'],
   ['ReadinessSignal.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (rs:ReadinessSignal) REQUIRE rs.key IS UNIQUE'],
   ['ReadinessCohort.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (rc:ReadinessCohort) REQUIRE rc.key IS UNIQUE'],
+  ['Conversation.sourceId', 'CREATE CONSTRAINT IF NOT EXISTS FOR (cv:Conversation) REQUIRE cv.sourceId IS UNIQUE'],
 ];
 
 const INDEXES: Array<[string, string]> = [
@@ -44,6 +45,11 @@ const INDEXES: Array<[string, string]> = [
   ['StageEvent.occurredAt', 'CREATE INDEX IF NOT EXISTS FOR (se:StageEvent) ON (se.occurredAt)'],
   ['ReadinessSignal.kind', 'CREATE INDEX IF NOT EXISTS FOR (rs:ReadinessSignal) ON (rs.kind)'],
   ['ReadinessCohort.targetStage', 'CREATE INDEX IF NOT EXISTS FOR (rc:ReadinessCohort) ON (rc.targetStage)'],
+  ['Case.slaStatus', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.slaStatus)'],
+  ['Conversation.caseId', 'CREATE INDEX IF NOT EXISTS FOR (cv:Conversation) ON (cv.caseId)'],
+  ['Conversation.caseStatus', 'CREATE INDEX IF NOT EXISTS FOR (cv:Conversation) ON (cv.caseStatus)'],
+  ['ActivityEvent.category', 'CREATE INDEX IF NOT EXISTS FOR (ae:ActivityEvent) ON (ae.category)'],
+  ['ActivityEvent.dueDate', 'CREATE INDEX IF NOT EXISTS FOR (ae:ActivityEvent) ON (ae.dueDate)'],
 ];
 
 export async function ensureGraphSchema(): Promise<void> {

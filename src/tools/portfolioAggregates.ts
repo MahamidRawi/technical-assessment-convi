@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { runReadQuery } from './_shared/runReadQuery';
-import { neo4jNumber, neo4jString } from './_shared/neo4jMap';
+import { neo4jNullableString, neo4jNumber, neo4jString } from './_shared/neo4jMap';
 import type { ToolDefinition } from './types';
 import {
   DIMENSION_QUERIES,
@@ -12,6 +12,7 @@ export type { AggregateDimension } from './portfolioAggregates/queries';
 
 export interface AggregateBucket {
   label: string;
+  key?: string;
   count: number;
 }
 
@@ -55,7 +56,11 @@ const inputSchema = z.object({
 
 type Input = z.infer<typeof inputSchema>;
 
-const bucketRowSchema = z.object({ label: neo4jString, count: neo4jNumber });
+const bucketRowSchema = z.object({
+  label: neo4jString,
+  key: neo4jNullableString.optional(),
+  count: neo4jNumber,
+});
 const totalRowSchema = z.object({ total: neo4jNumber });
 const distinctRowSchema = z.object({ totalDistinctBuckets: neo4jNumber });
 
@@ -80,7 +85,11 @@ async function execute({ dimension, limit }: Input): Promise<PortfolioAggregateR
   const [membershipRow] = await runReadQuery(queries.total, {}, totalRowSchema);
   const [distinctRow] = await runReadQuery(queries.distinct, {}, distinctRowSchema);
 
-  const buckets: AggregateBucket[] = bucketRows.map((r) => ({ label: r.label, count: r.count }));
+  const buckets: AggregateBucket[] = bucketRows.map((r) => {
+    const bucket: AggregateBucket = { label: r.label, count: r.count };
+    if (r.key) bucket.key = r.key;
+    return bucket;
+  });
   const totalCases = casesRow?.total ?? 0;
   const totalBucketMemberships = membershipRow?.total ?? 0;
   const totalDistinctBuckets = distinctRow?.totalDistinctBuckets ?? buckets.length;

@@ -91,7 +91,25 @@ test('buildCohortWriteSet drops timing when cohort is all snapshot members', () 
 
 test('buildCohortWriteSet drops timing when activity-log members are below the floor', () => {
   const inputs = fixtureInputs({ includeSignals: false });
-  // Two activity-log members, ten snapshot members — below the 3-peer minimum.
+  // One activity-log member, eleven snapshot members — below the 2-peer minimum.
+  inputs.reaches.forEach((reach, index) => {
+    reach.source = index < 1 ? 'activity_log' : 'current_stage_snapshot';
+  });
+
+  const writeSet = buildCohortWriteSet(inputs);
+  const cohort = writeSet.cohortRows.find(
+    (row) => row.scope === 'caseType' && row.caseType === 'work_accident'
+  );
+
+  assert.ok(cohort);
+  assert.equal(cohort.activityLogMemberCount, 1);
+  assert.equal(cohort.snapshotMemberCount, 11);
+  assert.equal(cohort.timingFromActivityLog, false);
+  assert.equal(cohort.medianDaysToStage, null);
+});
+
+test('buildCohortWriteSet keeps timing once activity-log members hit the floor', () => {
+  const inputs = fixtureInputs({ includeSignals: false });
   inputs.reaches.forEach((reach, index) => {
     reach.source = index < 2 ? 'activity_log' : 'current_stage_snapshot';
   });
@@ -104,24 +122,6 @@ test('buildCohortWriteSet drops timing when activity-log members are below the f
   assert.ok(cohort);
   assert.equal(cohort.activityLogMemberCount, 2);
   assert.equal(cohort.snapshotMemberCount, 10);
-  assert.equal(cohort.timingFromActivityLog, false);
-  assert.equal(cohort.medianDaysToStage, null);
-});
-
-test('buildCohortWriteSet keeps timing once activity-log members hit the floor', () => {
-  const inputs = fixtureInputs({ includeSignals: false });
-  inputs.reaches.forEach((reach, index) => {
-    reach.source = index < 3 ? 'activity_log' : 'current_stage_snapshot';
-  });
-
-  const writeSet = buildCohortWriteSet(inputs);
-  const cohort = writeSet.cohortRows.find(
-    (row) => row.scope === 'caseType' && row.caseType === 'work_accident'
-  );
-
-  assert.ok(cohort);
-  assert.equal(cohort.activityLogMemberCount, 3);
-  assert.equal(cohort.snapshotMemberCount, 9);
   assert.equal(cohort.timingFromActivityLog, true);
   assert.equal(cohort.medianDaysToStage, 100);
 });
@@ -149,11 +149,11 @@ test('buildCohortWriteSet keeps context signals but excludes caseType as a readi
 });
 
 test('thinSameTypeContextUsed labels [floor, MIN_COHORT_SIZE) same-type members behind a global cohort', () => {
-  // With MIN_COHORT_SIZE = 5 the thin interval is [3, 5); a same-type cohort with 5+
-  // members forms its own cohort and is not "thin", and < 3 is too sparse to mention.
-  assert.equal(thinSameTypeContextUsed('global', 3), true);
-  assert.equal(thinSameTypeContextUsed('global', 4), true);
-  assert.equal(thinSameTypeContextUsed('global', 5), false);
-  assert.equal(thinSameTypeContextUsed('global', 2), false);
-  assert.equal(thinSameTypeContextUsed('caseType', 4), false);
+  // With MIN_COHORT_SIZE = 3 the thin interval is [2, 3); a same-type cohort with 3+
+  // members forms its own cohort and is not "thin", and < 2 is too sparse to mention.
+  assert.equal(thinSameTypeContextUsed('global', 2), true);
+  assert.equal(thinSameTypeContextUsed('global', 3), false);
+  assert.equal(thinSameTypeContextUsed('global', 4), false);
+  assert.equal(thinSameTypeContextUsed('global', 1), false);
+  assert.equal(thinSameTypeContextUsed('caseType', 2), false);
 });

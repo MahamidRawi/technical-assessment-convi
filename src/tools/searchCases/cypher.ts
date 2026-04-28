@@ -29,7 +29,12 @@ const BASE_MATCH = `
     AND ($status IS NULL OR c.status = $status)
     AND ($isSigned IS NULL OR c.isSigned = $isSigned)
     AND ($isOverdue IS NULL OR c.isOverdue = $isOverdue)
-    AND ($mainInjury IS NULL OR toLower(coalesce(c.mainInjury, '')) CONTAINS $mainInjury)
+    AND ($mainInjury IS NULL
+         OR toLower(coalesce(c.mainInjury, '')) CONTAINS $mainInjury
+         OR ($injuryName IS NOT NULL AND EXISTS {
+              MATCH (c)-[:HAS_INJURY]->(mainInjuryMatch:Injury)
+              WHERE coalesce(mainInjuryMatch.normalized, toLower(mainInjuryMatch.name)) = $injuryName
+            }))
     AND ($clientName IS NULL OR toLower(coalesce(client.name, '')) CONTAINS $clientName)
     AND ($completionRateMin IS NULL OR c.completionRate >= $completionRateMin)
     AND ($completionRateMax IS NULL OR c.completionRate <= $completionRateMax)

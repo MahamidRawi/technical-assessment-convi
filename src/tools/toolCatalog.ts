@@ -5,10 +5,12 @@ import { getCaseEvidenceTool } from './getCaseEvidence';
 import { getCaseDocumentsTool } from './getCaseDocuments';
 import { getCaseCommunicationsTool } from './getCaseCommunications';
 import { findSimilarCasesTool } from './findSimilarCases';
+import { rankSimilarCasePairsTool } from './rankSimilarCasePairs';
 import { findSameStageLeadersTool } from './findSameStageLeaders';
 import { getReadinessSignalsTool } from './getReadinessSignals';
 import { getCaseInjuryProfileTool } from './getCaseInjuryProfile';
 import { getStageTimelineTool } from './getStageTimeline';
+import { getObservedStageTransitionsTool } from './getObservedStageTransitions';
 import { benchmarkAgainstStageTool } from './benchmarkAgainstStage';
 import { searchCasesTool } from './searchCases';
 import { portfolioAggregatesTool } from './portfolioAggregates';
@@ -20,6 +22,7 @@ import { compareCaseToReadinessPatternTool } from './compareCaseToReadinessPatte
 import { estimateTimeToStageTool } from './estimateTimeToStage';
 import { listPortfolioContactsTool } from './listPortfolioContacts';
 import { listPortfolioExpertsTool } from './listPortfolioExperts';
+import { runReadOnlyCypherTool } from './runReadOnlyCypher';
 
 export type AddTool = <TSchema extends z.ZodTypeAny, TResult>(
   def: ToolDefinition<TSchema, TResult>
@@ -28,17 +31,19 @@ export type AddTool = <TSchema extends z.ZodTypeAny, TResult>(
 export const TOOL_ENTRIES = [
   { name: findCaseTool.name },
   ...(process.env.AGENT_ADVANCED_TOOLS === 'true'
-    ? [{ name: getCaseGraphContextTool.name }]
+    ? [{ name: getCaseGraphContextTool.name }, { name: runReadOnlyCypherTool.name }]
     : []),
   { name: getCaseOverviewTool.name },
   { name: getCaseEvidenceTool.name },
   { name: getCaseDocumentsTool.name },
   { name: getCaseCommunicationsTool.name },
   { name: findSimilarCasesTool.name },
+  { name: rankSimilarCasePairsTool.name },
   { name: findSameStageLeadersTool.name },
   { name: getReadinessSignalsTool.name },
   { name: getCaseInjuryProfileTool.name },
   { name: getStageTimelineTool.name },
+  { name: getObservedStageTransitionsTool.name },
   { name: benchmarkAgainstStageTool.name },
   { name: searchCasesTool.name },
   { name: portfolioAggregatesTool.name },
@@ -52,16 +57,21 @@ export const TOOL_ENTRIES = [
 
 export function forEachTool(addTool: AddTool): void {
   addTool(findCaseTool);
-  if (process.env.AGENT_ADVANCED_TOOLS === 'true') addTool(getCaseGraphContextTool);
+  if (process.env.AGENT_ADVANCED_TOOLS === 'true') {
+    addTool(getCaseGraphContextTool);
+    addTool(runReadOnlyCypherTool);
+  }
   addTool(getCaseOverviewTool);
   addTool(getCaseEvidenceTool);
   addTool(getCaseDocumentsTool);
   addTool(getCaseCommunicationsTool);
   addTool(findSimilarCasesTool);
+  addTool(rankSimilarCasePairsTool);
   addTool(findSameStageLeadersTool);
   addTool(getReadinessSignalsTool);
   addTool(getCaseInjuryProfileTool);
   addTool(getStageTimelineTool);
+  addTool(getObservedStageTransitionsTool);
   addTool(benchmarkAgainstStageTool);
   addTool(searchCasesTool);
   addTool(portfolioAggregatesTool);

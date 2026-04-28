@@ -47,6 +47,11 @@ export async function writeCases(session: Session, caseNodes: CaseNode[]): Promi
         c.isOverdue = row.isOverdue,
         c.mainInjury = row.mainInjury,
         c.aiGeneratedSummary = row.aiGeneratedSummary,
+        c.slaStatus = row.slaStatus,
+        c.slaForCurrentStage = row.slaForCurrentStage,
+        c.slaDetails = row.slaDetails,
+        c.daysInCurrentStage = row.daysInCurrentStage,
+        c.expectedCompletionDate = row.expectedCompletionDate,
         c.ingestedAt = datetime($ingestedAt)
     `,
     { rows: caseNodes, ingestedAt }

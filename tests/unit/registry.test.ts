@@ -9,9 +9,12 @@ test('registry exposes cohort-based readiness tools and removes static claim rea
   assert.ok(names.includes('compareCaseToReadinessPattern'));
   assert.ok(names.includes('estimateTimeToStage'));
   assert.ok(names.includes('rankCasesByStageTransitionTime'));
+  assert.ok(names.includes('rankSimilarCasePairs'));
+  assert.ok(names.includes('getObservedStageTransitions'));
   assert.ok(!names.includes('explainReadinessDecision'));
   assert.ok(!names.includes('getCaseGraphContext'));
   assert.ok(!names.includes('getClaimReadiness'));
+  assert.ok(!names.includes('runReadOnlyCypher'));
 });
 
 test('registry exposes portfolio-level contact and expert listing tools', () => {

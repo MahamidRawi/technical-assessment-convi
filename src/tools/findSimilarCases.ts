@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isKnownCaseType } from '@/agents/intentPlanner';
 import { runReadQueryWithMeta, type QueryMeta } from './_shared/runReadQueryWithMeta';
 import { neo4jNumber, neo4jString, neo4jStringArray } from './_shared/neo4jMap';
 import { resolveCaseId } from './_shared/notFound';
@@ -42,6 +43,11 @@ const rowSchema = z.object({
 });
 
 async function execute(input: z.infer<typeof inputSchema>): Promise<SimilarCaseResult> {
+  if (isKnownCaseType(input.caseId)) {
+    throw new Error(
+      `findSimilarCases requires a resolved caseId; "${input.caseId}" is a caseType. Use rankSimilarCasePairs for global similarity.`
+    );
+  }
   const caseId = await resolveCaseId(input.caseId);
   const targetStage = input.targetStage?.trim() ? input.targetStage.trim() : null;
   const cypher = `

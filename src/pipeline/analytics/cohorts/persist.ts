@@ -44,4 +44,14 @@ export async function persistCohortWriteSet(
          rel.medianLeadDays = row.medianLeadDays`,
     { rows: writeSet.signalRows }
   );
+  await tx.run(
+    `UNWIND $rows AS row
+     MATCH (rc:ReadinessCohort {key: row.key}), (rs:ReadinessSignal {key: row.signalKey})
+     MERGE (rc)-[rel:WEAK_SIGNAL]->(rs)
+     SET rel.support = row.support,
+         rel.lift = row.lift,
+         rel.weight = row.weight,
+         rel.medianLeadDays = row.medianLeadDays`,
+    { rows: writeSet.weakSignalRows }
+  );
 }

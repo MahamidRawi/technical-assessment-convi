@@ -4,7 +4,8 @@ import {
   langfuseToolDescriptionPromptName,
 } from '@/prompts/promptNames';
 import {
-  DEFAULT_CASE_REASONER_SYSTEM_PROMPT,
+  DEFAULT_CASE_REASONER_MCP_SYSTEM_PROMPT,
+  DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN,
   getDefaultToolDescription,
 } from '@/prompts/defaultPrompts';
 import { createLogger } from '@/utils/logger';
@@ -31,10 +32,22 @@ const promptLabelOptions = () => {
   return label ? { label } : {};
 };
 
+const REQUIRED_SYSTEM_PROMPT_SNIPPETS = [
+  'Answer from graph evidence',
+  'rankSimilarCasePairs',
+  'getObservedStageTransitions',
+  'knownStageTaxonomy',
+  'Frequency is not severity',
+];
+
+function hasRequiredSystemPromptGuardrails(prompt: string): boolean {
+  return REQUIRED_SYSTEM_PROMPT_SNIPPETS.every((snippet) => prompt.includes(snippet));
+}
+
 export async function resolveCaseReasonerSystemPrompt(): Promise<string> {
   const client = getLangfuseClient();
   if (!client) {
-    return DEFAULT_CASE_REASONER_SYSTEM_PROMPT;
+    return DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN;
   }
 
   try {
@@ -43,12 +56,21 @@ export async function resolveCaseReasonerSystemPrompt(): Promise<string> {
       ...promptLabelOptions(),
     });
 
-    return prompt.compile();
+    const compiled = prompt.compile();
+    if (!hasRequiredSystemPromptGuardrails(compiled)) {
+      logger.warn('Resolved Langfuse system prompt is missing required guardrails; using local clean fallback.');
+      return DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN;
+    }
+    return compiled;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn(`Failed to resolve system prompt, using local fallback: ${message}`);
-    return DEFAULT_CASE_REASONER_SYSTEM_PROMPT;
+    return DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN;
   }
+}
+
+export function resolveCaseReasonerMcpSystemPrompt(): string {
+  return DEFAULT_CASE_REASONER_MCP_SYSTEM_PROMPT;
 }
 
 export async function resolveToolDescription(toolName: string): Promise<string> {

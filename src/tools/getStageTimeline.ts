@@ -21,6 +21,8 @@ export interface StageTimeline {
   eventDate: string | null;
   currentStage: string | null;
   history: StageTimelineEntry[];
+  knownStageTaxonomy: string[];
+  /** @deprecated Use knownStageTaxonomy. This is a graph-wide taxonomy, not a progression path. */
   availableStages: string[];
 }
 
@@ -84,6 +86,7 @@ async function execute({ caseId }: Input): Promise<StageTimeline> {
     caseId: row.caseId,
     eventDate,
     currentStage: row.currentStage,
+    knownStageTaxonomy: row.allStages.filter(Boolean),
     history,
     availableStages: row.allStages.filter(Boolean),
   };
@@ -95,7 +98,7 @@ export const getStageTimelineTool: ToolDefinition<typeof inputSchema, StageTimel
   inputSchema,
   execute,
   summarize: (r) =>
-    `${r.history.length} stage transitions, ${r.availableStages.length} stages in graph`,
+    `${r.history.length} observed stage transition(s), ${r.knownStageTaxonomy.length} known stage labels`,
   extractEvidence: (r) => [
     {
       sourceType: 'Case',

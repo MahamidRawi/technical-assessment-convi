@@ -20,6 +20,21 @@ function readString(
   return null;
 }
 
+function extractStatusFromChanges(details: Record<string, unknown>): string | null {
+  const changes = details.changes;
+  if (!changes || typeof changes !== 'object') return null;
+  const c = changes as Record<string, unknown>;
+  // Hebrew "סטטוס" or English "status" — pick the .to value
+  for (const key of Object.keys(c)) {
+    const entry = c[key];
+    if (entry && typeof entry === 'object' && 'to' in entry) {
+      const to = (entry as { to: unknown }).to;
+      if (typeof to === 'string') return to;
+    }
+  }
+  return null;
+}
+
 export async function writeReachedStages(
   session: Session,
   db: Db,
@@ -49,6 +64,20 @@ export async function writeReachedStages(
       action: entry.action,
       summary: entry.summary ?? null,
       at,
+      source: entry.source ?? null,
+      userName: entry.userName ?? null,
+      // Instruction events: capture due date and assignee for SLA queries
+      dueDate: extractISODate(details.dueDate),
+      // Reminder events: capture target date
+      targetDate: extractISODate(details.targetDate),
+      assigneeName: typeof details.assigneeName === 'string' ? details.assigneeName : null,
+      // Document generation events
+      documentType: typeof details.documentType === 'string' ? details.documentType : null,
+      documentCategory:
+        typeof details.documentCategory === 'string' ? details.documentCategory : null,
+      fileName: typeof details.fileName === 'string' ? details.fileName : null,
+      // Status transitions (e.g. "לא הושלם" -> "הושלם")
+      status: extractStatusFromChanges(details),
     });
 
     if (entry.action !== 'stage_changed' || !at) continue;
@@ -72,7 +101,16 @@ export async function writeReachedStages(
          ae.category = row.category,
          ae.action = row.action,
          ae.summary = row.summary,
-         ae.at = CASE WHEN row.at IS NULL THEN null ELSE datetime(row.at) END`,
+         ae.at = CASE WHEN row.at IS NULL THEN null ELSE datetime(row.at) END,
+         ae.source = row.source,
+         ae.userName = row.userName,
+         ae.dueDate = CASE WHEN row.dueDate IS NULL THEN null ELSE datetime(row.dueDate) END,
+         ae.targetDate = CASE WHEN row.targetDate IS NULL THEN null ELSE datetime(row.targetDate) END,
+         ae.assigneeName = row.assigneeName,
+         ae.documentType = row.documentType,
+         ae.documentCategory = row.documentCategory,
+         ae.fileName = row.fileName,
+         ae.status = row.status`,
     { rows: activityRows }
   );
   await session.run(

@@ -62,6 +62,8 @@ export interface CohortWriteSet {
   cohortRows: CohortWriteRow[];
   memberRows: CohortMemberWriteRow[];
   signalRows: CommonSignalWriteRow[];
+  /** Sub-threshold signals surfaced as supplementary evidence on small cohorts. */
+  weakSignalRows: CommonSignalWriteRow[];
 }
 
 export interface CohortWriteRunner {

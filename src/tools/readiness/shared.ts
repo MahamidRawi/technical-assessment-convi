@@ -39,6 +39,7 @@ export type ReadinessAvailability = 'cohort' | 'sparse_stage' | 'none';
 export type ReadinessEstimationBasis =
   | 'cohort_similar_cases'
   | 'stage_timing_fallback'
+  | 'snapshot_proxy'
   | 'none';
 
 export interface StageReachCount {
@@ -48,7 +49,11 @@ export interface StageReachCount {
   meta: QueryMeta;
 }
 
-const SAME_TYPE_THIN_FLOOR = Math.max(3, Math.ceil(MIN_COHORT_SIZE / 2));
+// "Thin context" interval: same-type members below MIN_COHORT_SIZE but at least
+// SAME_TYPE_THIN_FLOOR. Floor scales with MIN_COHORT_SIZE so the interval stays
+// meaningful as the size threshold moves. With MIN=3 → floor=2 (interval [2,3));
+// with MIN=5 → floor=3 (interval [3,5)). Below floor is too sparse to mention.
+const SAME_TYPE_THIN_FLOOR = Math.max(2, MIN_COHORT_SIZE - 2);
 
 export function thinSameTypeContextUsed(
   scope: 'caseType' | 'global',

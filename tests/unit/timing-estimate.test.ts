@@ -11,6 +11,9 @@ test('shapeTimingEstimate converts missing timing to no_estimate', () => {
     behindByDaysMedian: null,
     behindByDaysP25: null,
     behindByDaysP75: null,
+    snapshotProxyTotalDaysMedian: null,
+    snapshotProxyTotalDaysP25: null,
+    snapshotProxyTotalDaysP75: null,
   });
 });
 
@@ -23,6 +26,9 @@ test('shapeTimingEstimate keeps future remaining days non-negative', () => {
     behindByDaysMedian: null,
     behindByDaysP25: null,
     behindByDaysP75: null,
+    snapshotProxyTotalDaysMedian: null,
+    snapshotProxyTotalDaysP25: null,
+    snapshotProxyTotalDaysP75: null,
   });
 });
 
@@ -35,5 +41,8 @@ test('shapeTimingEstimate converts negative timing into positive lag fields', ()
     behindByDaysMedian: 407,
     behindByDaysP25: 500,
     behindByDaysP75: 300,
+    snapshotProxyTotalDaysMedian: null,
+    snapshotProxyTotalDaysP25: null,
+    snapshotProxyTotalDaysP75: null,
   });
 });

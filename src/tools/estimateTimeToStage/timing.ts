@@ -2,19 +2,28 @@ import type { ConfidenceBand } from '@/constants/readiness';
 import {
   CONFIDENCE_THRESHOLDS,
   MIN_ACTIVITY_LOG_TIMING_MEMBERS,
+  MIN_SNAPSHOT_PROXY_PEERS,
 } from '@/constants/readiness';
-import { weightedMedian, weightedQuantile } from '@/pipeline/analytics/stats';
+import { quantile, median, weightedMedian, weightedQuantile } from '@/pipeline/analytics/stats';
 import type { TargetCaseSummary } from '../readiness/shared';
 import type { EstimateRow } from './cypher';
 
 export interface ShapedTiming {
-  timingStatus: 'no_estimate' | 'future_estimate' | 'behind_historical_trajectory';
+  timingStatus: 'no_estimate' | 'future_estimate' | 'behind_historical_trajectory' | 'snapshot_proxy';
   remainingDaysMedian: number | null;
   remainingDaysP25: number | null;
   remainingDaysP75: number | null;
   behindByDaysMedian: number | null;
   behindByDaysP25: number | null;
   behindByDaysP75: number | null;
+  /**
+   * Median case-age at stage entry, computed from current_stage_snapshot peers.
+   * NOT a true transition duration. Surface this only when activity-log timing
+   * is unavailable, and label it explicitly as a proxy.
+   */
+  snapshotProxyTotalDaysMedian: number | null;
+  snapshotProxyTotalDaysP25: number | null;
+  snapshotProxyTotalDaysP75: number | null;
 }
 
 const NO_TIMING: ShapedTiming = {
@@ -25,6 +34,9 @@ const NO_TIMING: ShapedTiming = {
   behindByDaysMedian: null,
   behindByDaysP25: null,
   behindByDaysP75: null,
+  snapshotProxyTotalDaysMedian: null,
+  snapshotProxyTotalDaysP25: null,
+  snapshotProxyTotalDaysP75: null,
 };
 
 function nonNegative(value: number | null): number | null {
@@ -74,6 +86,9 @@ export function shapeTimingEstimate(raw: {
       behindByDaysMedian: Math.abs(raw.median),
       behindByDaysP25: negativeLag(raw.p25),
       behindByDaysP75: negativeLag(raw.p75),
+      snapshotProxyTotalDaysMedian: null,
+      snapshotProxyTotalDaysP25: null,
+      snapshotProxyTotalDaysP75: null,
     };
   }
   return {
@@ -84,6 +99,28 @@ export function shapeTimingEstimate(raw: {
     behindByDaysMedian: null,
     behindByDaysP25: null,
     behindByDaysP75: null,
+    snapshotProxyTotalDaysMedian: null,
+    snapshotProxyTotalDaysP25: null,
+    snapshotProxyTotalDaysP75: null,
+  };
+}
+
+function shapeSnapshotProxy(snapshotRows: EstimateRow[]): ShapedTiming {
+  const totals = snapshotRows
+    .map((row) => row.totalDaysToStage)
+    .filter((v): v is number => v !== null && v >= 0);
+  if (totals.length < MIN_SNAPSHOT_PROXY_PEERS) return NO_TIMING;
+  return {
+    timingStatus: 'snapshot_proxy',
+    remainingDaysMedian: null,
+    remainingDaysP25: null,
+    remainingDaysP75: null,
+    behindByDaysMedian: null,
+    behindByDaysP25: null,
+    behindByDaysP75: null,
+    snapshotProxyTotalDaysMedian: median(totals),
+    snapshotProxyTotalDaysP25: quantile(totals, 0.25),
+    snapshotProxyTotalDaysP75: quantile(totals, 0.75),
   };
 }
 
@@ -99,10 +136,12 @@ export function summarizePeerTiming(
   targetCase: TargetCaseSummary
 ): PeerTimingSummary {
   const ageDays = currentAgeDays(targetCase);
-  // Only activity-log peers carry transition timing; current_stage_snapshot peers
+  // Activity-log peers carry true transition timing. current_stage_snapshot peers
   // measure case age at current-stage entry. Mixing them produces a meaningless
-  // median. Below MIN_ACTIVITY_LOG_TIMING_MEMBERS we report no estimate.
+  // median, so the strong path requires MIN_ACTIVITY_LOG_TIMING_MEMBERS activity-log
+  // peers; below that we fall back to a snapshot-proxy with explicit labeling.
   const activityLogRows = rows.filter((row) => row.timingSource === 'activity_log');
+  const snapshotRows = rows.filter((row) => row.timingSource !== 'activity_log');
   const enoughActivityLog = activityLogRows.length >= MIN_ACTIVITY_LOG_TIMING_MEMBERS;
   const weightedRows =
     ageDays === null || !enoughActivityLog
@@ -116,22 +155,35 @@ export function summarizePeerTiming(
 
   const uncertaintyReasons: string[] = [];
   if (!targetCase.eventDate) uncertaintyReasons.push('Target case has no eventDate');
-  if (!enoughActivityLog) {
-    const al = activityLogRows.length;
-    const snap = rows.length - al;
-    uncertaintyReasons.push(
-      `Timing not estimated: ${al} activity-log peer${al === 1 ? '' : 's'} below the ${MIN_ACTIVITY_LOG_TIMING_MEMBERS}-peer minimum (${snap} additional peer${snap === 1 ? ' carries' : 's carry'} only a current-stage snapshot, which measures case age at stage entry — not transition duration).`
-    );
-  } else if (weightedRows.length === 0) {
-    uncertaintyReasons.push('No comparable historical cases with eventDate and target-stage timing');
-  }
 
-  return {
-    shaped: shapeTimingEstimate({
+  let shaped: ShapedTiming;
+  if (enoughActivityLog && weightedRows.length > 0) {
+    shaped = shapeTimingEstimate({
       median: weightedMedian(weightedRows),
       p25: weightedQuantile(weightedRows, 0.25),
       p75: weightedQuantile(weightedRows, 0.75),
-    }),
+    });
+  } else {
+    const proxy = shapeSnapshotProxy(snapshotRows);
+    shaped = proxy;
+    if (proxy.timingStatus === 'snapshot_proxy') {
+      const al = activityLogRows.length;
+      uncertaintyReasons.push(
+        `Snapshot-proxy timing only: ${al} activity-log peer${al === 1 ? '' : 's'} below the ${MIN_ACTIVITY_LOG_TIMING_MEMBERS}-peer minimum. The reported snapshotProxyTotalDays values measure peer case age at current-stage entry (not transition duration); use as a rough proxy, not a true ETA.`
+      );
+    } else if (!enoughActivityLog) {
+      const al = activityLogRows.length;
+      const snap = snapshotRows.length;
+      uncertaintyReasons.push(
+        `Timing not estimated: ${al} activity-log peer${al === 1 ? '' : 's'} below the ${MIN_ACTIVITY_LOG_TIMING_MEMBERS}-peer minimum and ${snap} snapshot peer${snap === 1 ? '' : 's'} below the ${MIN_SNAPSHOT_PROXY_PEERS}-peer proxy minimum.`
+      );
+    } else if (weightedRows.length === 0) {
+      uncertaintyReasons.push('No comparable historical cases with eventDate and target-stage timing');
+    }
+  }
+
+  return {
+    shaped,
     comparableCaseIds: rows.map((row) => row.peerCaseId),
     timingSources: rows.map((row) => ({
       caseId: row.peerCaseId,

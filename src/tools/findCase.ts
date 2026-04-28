@@ -21,6 +21,12 @@ export interface FindCaseResult {
   meta: QueryMeta;
 }
 
+export function isAmbiguousFindCase(result: FindCaseResult): boolean {
+  const [first, second] = result.hits;
+  if (!first || !second) return false;
+  return first.rank === second.rank && first.matchReason === second.matchReason;
+}
+
 const inputSchema = z.object({
   query: z
     .string()
@@ -115,6 +121,9 @@ export const findCaseTool: ToolDefinition<typeof inputSchema, FindCaseResult> = 
     if (result.hits.length === 0) return 'No matching cases';
     const first = result.hits[0];
     if (!first) return 'No matching cases';
+    if (isAmbiguousFindCase(result)) {
+      return `${result.hits.length} candidate cases; top match is ambiguous`;
+    }
     return result.hits.length === 1 ? `Resolved ${first.caseName}` : `${result.hits.length} candidate cases`;
   },
   extractEvidence: (result) =>

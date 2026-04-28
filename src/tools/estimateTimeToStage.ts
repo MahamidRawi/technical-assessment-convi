@@ -65,6 +65,12 @@ async function estimateForSparseStage(
     peerCount > 0
       ? `; only ${peerCount} timed historical peer${peerCount === 1 ? '' : 's'} reached the stage.`
       : `, and no timed historical peer reached the stage.`;
+  const basis: ReadinessEstimationBasis =
+    summary.shaped.timingStatus === 'snapshot_proxy'
+      ? 'snapshot_proxy'
+      : peerCount > 0
+        ? 'stage_timing_fallback'
+        : 'none';
   return {
     caseId,
     targetStage,
@@ -72,7 +78,7 @@ async function estimateForSparseStage(
     availability: peerCount > 0 ? 'sparse_stage' : 'none',
     cohortAvailable: false,
     historicalPeerCount: peerCount,
-    estimationBasis: peerCount > 0 ? 'stage_timing_fallback' : 'none',
+    estimationBasis: basis,
     cohortKey: '',
     comparableCaseIds: summary.comparableCaseIds,
     timingSources: summary.timingSources,
@@ -156,6 +162,9 @@ function summarize(result: StageTimeEstimate): string {
   }
   if (result.timingStatus === 'behind_historical_trajectory') {
     return `${result.estimationBasis}: behind historical trajectory by median ${result.behindByDaysMedian} days for ${result.targetStage}`;
+  }
+  if (result.timingStatus === 'snapshot_proxy') {
+    return `${result.estimationBasis}: snapshot-proxy median ${result.snapshotProxyTotalDaysMedian} days from event to ${result.targetStage} (peer case-age, not transition duration)`;
   }
   return `${result.estimationBasis}: median ${result.remainingDaysMedian} days to ${result.targetStage}`;
 }

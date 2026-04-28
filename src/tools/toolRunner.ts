@@ -3,9 +3,13 @@ import type { z } from 'zod';
 import type { OnAgentStatus, OnReadinessDecision, OnStepTrace } from '@/types/stream.types';
 import type { StepTrace } from '@/types/trace.types';
 import type { TurnLogger } from '@/utils/turnLogger';
+import type { ToolPlan } from '@/agents/intentPlanner';
+import type { EvidenceLedger } from '@/agents/evidenceLedger';
+import { observeToolResult } from '@/agents/evidenceLedger';
 import type { ToolDefinition } from './types';
 import { toToolErrorResult } from './toolErrors';
 import type { ReadinessArtifactComposer } from './readiness/artifactComposer';
+import { validateToolCallAgainstPlan } from './toolCallPolicy';
 
 const tracer = trace.getTracer('caseReasoner', '1.0.0');
 
@@ -15,6 +19,8 @@ export interface ToolRunnerCallbacks {
   onReadinessDecision?: OnReadinessDecision;
   turnLogger?: TurnLogger;
   readinessComposer?: ReadinessArtifactComposer;
+  toolPlan?: ToolPlan;
+  evidenceLedger?: EvidenceLedger;
   nextStep(): number;
 }
 
@@ -38,7 +44,11 @@ export function createToolExecute<TSchema extends z.ZodTypeAny, TResult>(
       const start = Date.now();
       try {
         const input = def.inputSchema.parse(args);
+        validateToolCallAgainstPlan(def.name, input, callbacks.toolPlan);
         const result = await def.execute(input);
+        if (callbacks.evidenceLedger) {
+          observeToolResult(callbacks.evidenceLedger, def.name, result);
+        }
         const durationMs = Date.now() - start;
         const resultStr = JSON.stringify(result, null, 2);
         const meta = def.traceMeta?.(result) ?? null;

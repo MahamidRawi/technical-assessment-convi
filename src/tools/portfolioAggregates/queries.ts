@@ -64,19 +64,19 @@ export const DIMENSION_QUERIES: Record<AggregateDimension, DimensionQueries> = {
     partitioning: true,
   },
   insurer: {
-    buckets: `MATCH (c:Case)-[:AGAINST_INSURER]->(i:InsuranceCompany) RETURN i.name AS label, count(DISTINCT c) AS count`,
+    buckets: `MATCH (c:Case)-[:AGAINST_INSURER]->(i:InsuranceCompany) RETURN i.name AS label, i.normalized AS key, count(DISTINCT c) AS count`,
     total: `MATCH (:Case)-[:AGAINST_INSURER]->(:InsuranceCompany) RETURN count(*) AS total`,
     distinct: `MATCH (:Case)-[:AGAINST_INSURER]->(i:InsuranceCompany) RETURN count(DISTINCT i.name) AS totalDistinctBuckets`,
     partitioning: false,
   },
   injury: {
-    buckets: `MATCH (c:Case)-[:HAS_INJURY]->(i:Injury) RETURN i.name AS label, count(DISTINCT c) AS count`,
+    buckets: `MATCH (c:Case)-[:HAS_INJURY]->(i:Injury) RETURN i.name AS label, i.normalized AS key, count(DISTINCT c) AS count`,
     total: `MATCH (c:Case)-[:HAS_INJURY]->(:Injury) RETURN count(*) AS total`,
     distinct: `MATCH (:Case)-[:HAS_INJURY]->(i:Injury) RETURN count(DISTINCT i.name) AS totalDistinctBuckets`,
     partitioning: false,
   },
   bodyPart: {
-    buckets: `MATCH (c:Case)-[:AFFECTS_BODY_PART]->(b:BodyPart) RETURN b.name AS label, count(DISTINCT c) AS count`,
+    buckets: `MATCH (c:Case)-[:AFFECTS_BODY_PART]->(b:BodyPart) RETURN b.name AS label, b.normalized AS key, count(DISTINCT c) AS count`,
     total: `MATCH (c:Case)-[:AFFECTS_BODY_PART]->(:BodyPart) RETURN count(*) AS total`,
     distinct: `MATCH (:Case)-[:AFFECTS_BODY_PART]->(b:BodyPart) RETURN count(DISTINCT b.name) AS totalDistinctBuckets`,
     partitioning: false,

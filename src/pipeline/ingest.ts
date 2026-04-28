@@ -11,6 +11,7 @@ import { writeCases, writeContactsAndClients } from './ingest/writeCore';
 import { writeDocuments, writeCommunications } from './ingest/writeContent';
 import { writeStages, writeInjuriesAndBodyParts, writeInsurers, writeExperts } from './ingest/writeTaxonomy';
 import { writeReachedStages, backfillCurrentStageEvents } from './ingest/writeActivity';
+import { writeConversations } from './ingest/writeConversations';
 import { runClear } from './ingest/clear';
 import { writeSignals } from './analytics/writeSignals';
 import { writeReadinessCohorts } from './analytics/writeReadinessCohorts';
@@ -92,6 +93,7 @@ async function writeAll(
     await writeExperts(session, rows.expertRows);
     await writeReachedStages(session, db, caseIds);
     await backfillCurrentStageEvents(session);
+    await writeConversations(session, db, caseIds);
     await writeSignals(session);
     await writeReadinessCohorts(session);
 

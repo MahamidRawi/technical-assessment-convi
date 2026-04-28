@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { runReadQueryWithMeta, type QueryMeta } from './_shared/runReadQueryWithMeta';
 import { assertStageExists, resolveCaseId } from './_shared/notFound';
+import { MIN_SIGNAL_LIFT, MIN_SIGNAL_SUPPORT } from '@/constants/readiness';
 import type { ToolDefinition } from './types';
 import {
   NoGlobalReadinessCohortError,
@@ -14,10 +15,12 @@ import {
 } from './readiness/shared';
 import {
   COMMON_SIGNAL_CYPHER,
+  WEAK_SIGNAL_CYPHER,
   signalRowSchema,
   stageReachMeta,
   type CommonSignal,
 } from './deriveReadinessPattern/cypher';
+import { runReadQuery } from './_shared/runReadQuery';
 
 export interface ReadinessPattern {
   caseId: string | null;
@@ -41,6 +44,7 @@ export interface ReadinessPattern {
     daysToStageP75: number | null;
   };
   observedCommonSignals: CommonSignal[];
+  observedWeakSignals: CommonSignal[];
   meta: QueryMeta;
 }
 
@@ -84,6 +88,7 @@ function sparsePattern(input: {
     sameTypeThinContextUsed: false,
     timing: { medianDaysToStage: null, daysToStageP25: null, daysToStageP75: null },
     observedCommonSignals: [],
+    observedWeakSignals: [],
     meta: stageReachMeta(input.targetStage, input.targetSubStage),
   };
 }
@@ -99,6 +104,19 @@ async function patternFromCohort(
     { cohortKey: cohort.key },
     signalRowSchema
   );
+  const weakRows = await runReadQuery(
+    WEAK_SIGNAL_CYPHER,
+    { cohortKey: cohort.key },
+    signalRowSchema
+  );
+  const reasons = cohortUncertaintyReasons(cohort);
+  if (rows.length === 0 && weakRows.length > 0) {
+    reasons.push(
+      `No strong common signals (support>=${MIN_SIGNAL_SUPPORT}, lift>=${MIN_SIGNAL_LIFT}); ${weakRows.length} weak signal${
+        weakRows.length === 1 ? '' : 's'
+      } surfaced as supplementary evidence.`
+    );
+  }
   return {
     caseId,
     targetStage,
@@ -107,7 +125,7 @@ async function patternFromCohort(
     cohortAvailable: true,
     historicalPeerCount: cohort.memberCount,
     estimationBasis: 'cohort_similar_cases',
-    uncertaintyReasons: cohortUncertaintyReasons(cohort),
+    uncertaintyReasons: reasons,
     cohortKey: cohort.key,
     cohortSelectionCriteria: cohort.cohortSelectionCriteria,
     cohortSize: cohort.memberCount,
@@ -121,6 +139,7 @@ async function patternFromCohort(
       daysToStageP75: cohort.daysToStageP75,
     },
     observedCommonSignals: rows,
+    observedWeakSignals: weakRows,
     meta,
   };
 }
@@ -166,7 +185,9 @@ export async function runDeriveReadinessPattern(
 
 function summarize(result: ReadinessPattern): string {
   if (result.cohortAvailable) {
-    return `${result.cohortSize} historical cases, ${result.observedCommonSignals.length} common signals`;
+    const weak = result.observedWeakSignals.length;
+    const weakSuffix = weak > 0 ? `, ${weak} weak signal${weak === 1 ? '' : 's'}` : '';
+    return `${result.cohortSize} historical cases, ${result.observedCommonSignals.length} common signals${weakSuffix}`;
   }
   const peers = result.historicalPeerCount;
   return `No readiness cohort; ${peers} historical peer${peers === 1 ? '' : 's'}`;

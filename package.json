@@ -13,6 +13,7 @@
     "ingest": "tsx src/pipeline/ingest.ts",
     "similarity": "tsx src/pipeline/similarity.ts",
     "check:neo4j": "tsx src/scripts/check-neo4j.ts",
+    "check:mcp": "tsx src/scripts/check-neo4j-mcp.ts",
     "verify:graph": "tsx src/scripts/verify-graph.ts",
     "verify:cohorts": "tsx src/scripts/verify-cohort-state.ts",
     "verify:readiness-fix": "tsx src/scripts/verify-readiness-fix.ts",
@@ -30,8 +31,10 @@
   },
   "dependencies": {
     "@ai-sdk/google-vertex": "^4.0.112",
+    "@ai-sdk/mcp": "^1.0.36",
     "@ai-sdk/openai": "^3.0.0",
     "@ai-sdk/react": "^3.0.0",
+    "@johnymontana/neo4j-mcp": "^0.0.2",
     "@langfuse/client": "^5.2.0",
     "@langfuse/otel": "^5.2.0",
     "@langfuse/tracing": "^5.2.0",

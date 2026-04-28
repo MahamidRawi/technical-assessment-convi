@@ -18,6 +18,18 @@ export const COMMON_SIGNAL_CYPHER = `
   ORDER BY rel.weight DESC, rs.label ASC
 `;
 
+export const WEAK_SIGNAL_CYPHER = `
+  MATCH (rc:ReadinessCohort {key: $cohortKey})-[rel:WEAK_SIGNAL]->(rs:ReadinessSignal)
+  RETURN rs.key AS signalKey,
+         rs.label AS label,
+         rs.kind AS kind,
+         rel.support AS support,
+         rel.lift AS lift,
+         rel.weight AS weight,
+         rel.medianLeadDays AS medianLeadDays
+  ORDER BY rel.weight DESC, rs.label ASC
+`;
+
 const STAGE_REACH_CYPHER =
   'MATCH (:Case)-[:HAS_STAGE_EVENT]->(se:StageEvent)-[:FOR_STAGE]->(:Stage {name: $targetStage}) RETURN count(DISTINCT se.caseId) AS historicalPeerCount';
 

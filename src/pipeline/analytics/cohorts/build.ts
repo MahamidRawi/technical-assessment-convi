@@ -5,6 +5,9 @@ import {
   MIN_SIGNAL_LIFT,
   MIN_SIGNAL_SUPPORT,
   TOP_SIGNAL_LIMIT,
+  TOP_WEAK_SIGNAL_LIMIT,
+  WEAK_SIGNAL_LIFT,
+  WEAK_SIGNAL_SUPPORT,
   cohortConfidenceFor,
 } from '@/constants/readiness';
 import { median, quantile } from '../stats';
@@ -89,6 +92,7 @@ export function buildCohortWriteSet(inputs: CohortInputs): CohortWriteSet {
   const cohortRows: CohortWriteSet['cohortRows'] = [];
   const memberRows: CohortWriteSet['memberRows'] = [];
   const signalRows: CohortWriteSet['signalRows'] = [];
+  const weakSignalRows: CohortWriteSet['weakSignalRows'] = [];
 
   for (const scope of uniqueScopes(inputs.cases)) {
     const scopedReaches = inputs.reaches.filter((reach) => scope.scope === 'global' || reach.caseType === scope.caseType);
@@ -149,20 +153,33 @@ export function buildCohortWriteSet(inputs: CohortInputs): CohortWriteSet {
       for (const member of members) addMemberSignals(stats, inputs.signalsByCase.get(member.caseId) ?? [], member.occurredAt);
       for (const control of controlCases) addControlSignals(stats, inputs.signalsByCase.get(control.caseId) ?? []);
 
-      const ranked = Array.from(stats.entries())
-        .map(([signalKey, stat]) => {
-          const support = stat.memberHits / members.length;
-          const controlSupport = controlCases.length > 0 ? Math.max(stat.controlHits / controlCases.length, 0.01) : 0.01;
-          const lift = support / controlSupport;
-          return { signalKey, support, lift, weight: support * Math.log1p(lift), medianLeadDays: median(stat.leadDays) };
-        })
+      const scored = Array.from(stats.entries()).map(([signalKey, stat]) => {
+        const support = stat.memberHits / members.length;
+        const controlSupport = controlCases.length > 0 ? Math.max(stat.controlHits / controlCases.length, 0.01) : 0.01;
+        const lift = support / controlSupport;
+        return { signalKey, support, lift, weight: support * Math.log1p(lift), medianLeadDays: median(stat.leadDays) };
+      });
+      const ranked = scored
         .filter((row) => row.support >= MIN_SIGNAL_SUPPORT && row.lift >= MIN_SIGNAL_LIFT)
         .sort((a, b) => b.weight - a.weight)
         .slice(0, TOP_SIGNAL_LIMIT);
+      const commonKeys = new Set(ranked.map((row) => row.signalKey));
+      // Weak tier surfaces sub-threshold patterns the agent can cite as supplementary
+      // evidence. Excludes keys already in the strong tier so the two lists are disjoint.
+      const weak = scored
+        .filter(
+          (row) =>
+            !commonKeys.has(row.signalKey) &&
+            row.support >= WEAK_SIGNAL_SUPPORT &&
+            row.lift >= WEAK_SIGNAL_LIFT
+        )
+        .sort((a, b) => b.weight - a.weight)
+        .slice(0, TOP_WEAK_SIGNAL_LIMIT);
 
       for (const row of ranked) signalRows.push({ key: cohortId, ...row });
+      for (const row of weak) weakSignalRows.push({ key: cohortId, ...row });
     }
   }
 
-  return { cohortRows, memberRows, signalRows };
+  return { cohortRows, memberRows, signalRows, weakSignalRows };
 }

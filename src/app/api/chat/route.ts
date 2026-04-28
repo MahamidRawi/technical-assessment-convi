@@ -11,6 +11,7 @@ import { createTurnLogger } from '@/utils/turnLogger';
 
 const logger = createLogger('Chat');
 
+export const runtime = 'nodejs';
 export const maxDuration = 90;
 
 function extractUserText(messages: UIMessage[]): string {

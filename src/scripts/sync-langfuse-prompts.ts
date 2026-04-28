@@ -6,7 +6,7 @@ import {
   langfuseToolDescriptionPromptName,
 } from '../prompts/promptNames';
 import {
-  DEFAULT_CASE_REASONER_SYSTEM_PROMPT,
+  DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN,
   DEFAULT_TOOL_DESCRIPTIONS,
 } from '../prompts/defaultPrompts';
 
@@ -62,7 +62,7 @@ interface PromptUpload {
 
 function buildUploadList(): PromptUpload[] {
   const uploads: PromptUpload[] = [
-    { name: LANGFUSE_PROMPT_CASE_REASONER_SYSTEM, prompt: DEFAULT_CASE_REASONER_SYSTEM_PROMPT },
+    { name: LANGFUSE_PROMPT_CASE_REASONER_SYSTEM, prompt: DEFAULT_CASE_REASONER_SYSTEM_PROMPT_CLEAN },
   ];
   for (const [toolName, description] of Object.entries(DEFAULT_TOOL_DESCRIPTIONS)) {
     uploads.push({

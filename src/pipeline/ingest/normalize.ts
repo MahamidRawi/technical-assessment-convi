@@ -57,6 +57,8 @@ export function normalizeCaseNode(
   mongoCase: MongoCase,
   projection: FinancialProjection | null
 ): CaseNode {
+  const caseStage = projection?.projection?.caseStage;
+  const quarterlyTargets = projection?.projection?.quarterlyTargets;
   return {
     sourceId: extractSourceId(mongoCase._id),
     caseId: mongoCase.caseId,
@@ -80,6 +82,11 @@ export function normalizeCaseNode(
     isOverdue: projection?.projection?.timing?.isOverdue ?? null,
     mainInjury: projection?.projection?.caseData?.mainInjury ?? null,
     aiGeneratedSummary: mongoCase.aiGeneratedSummary ?? null,
+    slaStatus: caseStage?.slaStatus ?? null,
+    slaForCurrentStage: caseStage?.slaForCurrentStage ?? null,
+    slaDetails: caseStage?.slaDetails ?? null,
+    daysInCurrentStage: caseStage?.daysInCurrentStage ?? null,
+    expectedCompletionDate: quarterlyTargets?.expectedCompletionDate ?? null,
   };
 }
 

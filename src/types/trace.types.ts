@@ -56,13 +56,16 @@ export interface MissingSignalTrace {
 }
 
 export interface TimelineEstimateTrace {
-  timingStatus: 'no_estimate' | 'future_estimate' | 'behind_historical_trajectory';
+  timingStatus: 'no_estimate' | 'future_estimate' | 'behind_historical_trajectory' | 'snapshot_proxy';
   remainingDaysMedian: number | null;
   remainingDaysP25: number | null;
   remainingDaysP75: number | null;
   behindByDaysMedian: number | null;
   behindByDaysP25: number | null;
   behindByDaysP75: number | null;
+  snapshotProxyTotalDaysMedian: number | null;
+  snapshotProxyTotalDaysP25: number | null;
+  snapshotProxyTotalDaysP75: number | null;
   comparableCaseIds: string[];
   timingSources: Array<{ caseId: string; timingSource: string }>;
 }
@@ -88,14 +91,17 @@ export interface ReadinessDecisionArtifact {
   availability: 'cohort' | 'sparse_stage' | 'none';
   cohortAvailable: boolean;
   historicalPeerCount: number;
-  estimationBasis: 'cohort_similar_cases' | 'stage_timing_fallback' | 'none';
+  estimationBasis: 'cohort_similar_cases' | 'stage_timing_fallback' | 'snapshot_proxy' | 'none';
   cohortSelectionCriteria: string;
   cohortSize: number;
   cohortMemberCaseIds: string[];
   observedCommonSignals: ObservedSignalTrace[];
+  observedWeakSignals: ObservedSignalTrace[];
   matchedSignals: MatchedSignalTrace[];
   missingSignals: MissingSignalTrace[];
   contextDifferences: MissingSignalTrace[];
+  weakMatchedSignals: MatchedSignalTrace[];
+  weakMissingSignals: MissingSignalTrace[];
   timelineEstimate: TimelineEstimateTrace;
   confidence: ConfidenceBand;
   uncertaintyReasons: string[];

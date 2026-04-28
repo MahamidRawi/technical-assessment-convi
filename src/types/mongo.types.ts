@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// Documented enum values are exported from ./mongo.enums and used by:
+//   1. The MCP safety layer (catches Cypher literals not in the enum)
+//   2. The agent system prompt (lists valid values)
+// Ingest schemas here remain z.string() rather than z.enum() so that a
+// previously-unseen Mongo value never aborts ingest — the safety layer
+// is where strict enum enforcement lives.
+
 const IdSchema = z.unknown();
 const DateLikeSchema = z.unknown();
 
@@ -51,6 +58,19 @@ export const FinancialProjectionSchema = z.object({
       monthsSinceEvent: z.number().optional(),
       isOverdue: z.boolean().optional(),
     }).optional(),
+    caseStage: z.object({
+      slaStatus: z.string().nullish(),
+      slaForCurrentStage: z.string().nullish(),
+      slaDetails: z.string().nullish(),
+      daysInCurrentStage: z.number().nullish(),
+      stageEnteredDate: z.string().nullish(),
+    }).passthrough().nullish(),
+    quarterlyTargets: z.object({
+      currentQuarter: z.string().nullish(),
+      nextQuarter: z.string().nullish(),
+      annualTarget: z.string().nullish(),
+      expectedCompletionDate: z.string().nullish(),
+    }).passthrough().nullish(),
     caseData: z.object({
       insuranceCompany: z.string().nullish(),
       mainInjury: z.string().nullish(),
@@ -116,8 +136,38 @@ export const MongoActivityLogSchema = z.object({
   summary: z.string().nullish(),
   timestamp: DateLikeSchema.nullish(),
   details: z.record(z.string(), z.unknown()).nullish(),
+  source: z.string().nullish(),
+  userName: z.string().nullish(),
 }).passthrough();
 export type MongoActivityLog = z.infer<typeof MongoActivityLogSchema>;
+
+export const MongoConversationSchema = z.object({
+  _id: IdSchema,
+  caseId: z.string(),
+  sessionId: z.string().nullish(),
+  userName: z.string().nullish(),
+  caseType: z.string().nullish(),
+  caseStatus: z.string().nullish(),
+  status: z.string().nullish(),
+  messageCount: z.number().nullish(),
+  lastAgentUsed: z.string().nullish(),
+  routingReason: z.string().nullish(),
+  workAccidentFlag: z.boolean().nullish(),
+  createdAt: DateLikeSchema.nullish(),
+  lastActivity: DateLikeSchema.nullish(),
+  updatedAt: DateLikeSchema.nullish(),
+  triageCompletedAt: DateLikeSchema.nullish(),
+  submittedForReviewAt: DateLikeSchema.nullish(),
+  lastSummarizedAt: DateLikeSchema.nullish(),
+  triageSummary: z.object({
+    accidentDate: z.string().nullish(),
+    accidentType: z.string().nullish(),
+    medicalTreatment: z.string().nullish(),
+    currentStatus: z.string().nullish(),
+    thresholdChecks: z.record(z.string(), z.string()).nullish(),
+  }).passthrough().nullish(),
+}).passthrough();
+export type MongoConversation = z.infer<typeof MongoConversationSchema>;
 
 export const MongoCommunicationSchema = z.object({
   _id: IdSchema,

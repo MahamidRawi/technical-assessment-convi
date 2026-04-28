@@ -56,3 +56,12 @@ test('searchCases returns truncation-supporting fields', () => {
   assert.match(cypher, /c\.signedAt\s+AS signedAt/);
   assert.match(countCypher, /RETURN count\(c\) AS total/);
 });
+
+test('searchCases lets normalized injury match satisfy redundant mainInjury filter', () => {
+  const { cypher } = buildSearchCypher(
+    inputSchema.parse({ injuryName: 'כאבי גב תחתון', mainInjury: 'כאבי גב תחתון' })
+  );
+
+  assert.match(cypher, /mainInjuryMatch:Injury/);
+  assert.match(cypher, /coalesce\(mainInjuryMatch\.normalized, toLower\(mainInjuryMatch\.name\)\) = \$injuryName/);
+});

@@ -216,7 +216,7 @@ test(
       communicationEmitRows: [],
       activityEmitRows: [],
     };
-    const emptyCohorts: CohortWriteSet = { cohortRows: [], memberRows: [], signalRows: [] };
+    const emptyCohorts: CohortWriteSet = { cohortRows: [], memberRows: [], signalRows: [], weakSignalRows: [] };
     const session = createSession();
 
     try {

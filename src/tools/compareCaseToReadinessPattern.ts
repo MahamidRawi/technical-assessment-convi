@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { runReadQuery } from './_shared/runReadQuery';
 import { runReadQueryWithMeta, type QueryMeta } from './_shared/runReadQueryWithMeta';
 import { neo4jNullableNumber, neo4jNullableString, neo4jNumber, neo4jString } from './_shared/neo4jMap';
 import { assertStageExists, resolveCaseId } from './_shared/notFound';
@@ -27,6 +28,8 @@ export interface CasePatternComparison {
   matchedSignals: Array<{ signalKey: string; label: string; kind: string; weight: number; observedAt: string | null; evidence: EvidenceItem[] }>;
   missingSignals: Array<{ signalKey: string; label: string; kind: string; weight: number; medianLeadDays: number | null }>;
   contextDifferences: Array<{ signalKey: string; label: string; kind: string; weight: number; medianLeadDays: number | null }>;
+  weakMatchedSignals: Array<{ signalKey: string; label: string; kind: string; weight: number; observedAt: string | null; evidence: EvidenceItem[] }>;
+  weakMissingSignals: Array<{ signalKey: string; label: string; kind: string; weight: number; medianLeadDays: number | null }>;
   meta: QueryMeta;
 }
 
@@ -81,6 +84,8 @@ function sparseComparison(input: {
     matchedSignals: [],
     missingSignals: [],
     contextDifferences: [],
+    weakMatchedSignals: [],
+    weakMissingSignals: [],
     meta: {
       cypher: 'MATCH (rc:ReadinessCohort {targetStage: $targetStage}) RETURN count(rc) AS cohorts',
       params: { targetStage: input.targetStage, targetSubStage: input.targetSubStage },
@@ -112,8 +117,8 @@ export async function runCompareCaseToReadinessPattern(
     }
     throw error;
   }
-  const cypher = `
-    MATCH (rc:ReadinessCohort {key: $cohortKey})-[rel:COMMON_SIGNAL]->(rs:ReadinessSignal)
+  const tieredCypher = (relType: 'COMMON_SIGNAL' | 'WEAK_SIGNAL'): string => `
+    MATCH (rc:ReadinessCohort {key: $cohortKey})-[rel:${relType}]->(rs:ReadinessSignal)
     MATCH (c:Case {caseId: $caseId})
     OPTIONAL MATCH (c)-[hs:HAS_SIGNAL]->(rs)
     RETURN rs.key AS signalKey,
@@ -128,7 +133,12 @@ export async function runCompareCaseToReadinessPattern(
     ORDER BY rel.weight DESC, rs.label ASC
   `;
   const { rows, meta } = await runReadQueryWithMeta(
-    cypher,
+    tieredCypher('COMMON_SIGNAL'),
+    { cohortKey: cohort.key, caseId },
+    rowSchema
+  );
+  const weakRows = await runReadQuery(
+    tieredCypher('WEAK_SIGNAL'),
     { cohortKey: cohort.key, caseId },
     rowSchema
   );
@@ -153,8 +163,35 @@ export async function runCompareCaseToReadinessPattern(
     }));
   const missingSignals = unmatchedSignals.filter((row) => !CONTEXT_SIGNAL_KINDS.has(row.kind));
   const contextDifferences = unmatchedSignals.filter((row) => CONTEXT_SIGNAL_KINDS.has(row.kind));
+  const weakMatchedSignals = weakRows
+    .filter((row) => row.observedAt !== null && !CONTEXT_SIGNAL_KINDS.has(row.kind))
+    .map((row) => ({
+      signalKey: row.signalKey,
+      label: row.label,
+      kind: row.kind,
+      weight: row.weight,
+      observedAt: row.observedAt,
+      evidence: row.evidence.map((item) => ({ ...item, viaTool: 'compareCaseToReadinessPattern' })),
+    }));
+  const weakMissingSignals = weakRows
+    .filter((row) => row.observedAt === null && !CONTEXT_SIGNAL_KINDS.has(row.kind))
+    .map((row) => ({
+      signalKey: row.signalKey,
+      label: row.label,
+      kind: row.kind,
+      weight: row.weight,
+      medianLeadDays: row.medianLeadDays,
+    }));
   const totalWeight = rows.reduce((sum, row) => sum + row.weight, 0);
   const matchedWeight = matchedSignals.reduce((sum, row) => sum + row.weight, 0);
+  const reasons = cohortUncertaintyReasons(cohort);
+  if (rows.length === 0 && weakRows.length > 0) {
+    reasons.push(
+      `No strong common signals available; ${weakMatchedSignals.length} matched and ${weakMissingSignals.length} missing weak signal${
+        weakMissingSignals.length === 1 ? '' : 's'
+      } surfaced as supplementary evidence.`
+    );
+  }
   return {
     caseId,
     targetStage: input.targetStage,
@@ -163,13 +200,15 @@ export async function runCompareCaseToReadinessPattern(
     cohortAvailable: true,
     historicalPeerCount: cohort.memberCount,
     estimationBasis: 'cohort_similar_cases',
-    uncertaintyReasons: cohortUncertaintyReasons(cohort),
+    uncertaintyReasons: reasons,
     cohortKey: cohort.key,
     cohortSelectionCriteria: cohort.cohortSelectionCriteria,
     weightedCoverage: totalWeight === 0 ? 0 : matchedWeight / totalWeight,
     matchedSignals,
     missingSignals,
     contextDifferences,
+    weakMatchedSignals,
+    weakMissingSignals,
     meta,
   };
 }
@@ -179,11 +218,19 @@ export const compareCaseToReadinessPatternTool: ToolDefinition<typeof inputSchem
   label: 'Comparing case to readiness pattern',
   inputSchema,
   execute: runCompareCaseToReadinessPattern,
-  summarize: (result) =>
-    result.cohortAvailable
-      ? `coverage ${(result.weightedCoverage * 100).toFixed(0)}%, ${result.matchedSignals.length} matched, ${result.missingSignals.length} missing evidence, ${result.contextDifferences.length} context differences`
-      : `No readiness cohort; ${result.historicalPeerCount} historical peer${result.historicalPeerCount === 1 ? '' : 's'}`,
+  summarize: (result) => {
+    if (!result.cohortAvailable) {
+      return `No readiness cohort; ${result.historicalPeerCount} historical peer${result.historicalPeerCount === 1 ? '' : 's'}`;
+    }
+    const weakSuffix =
+      result.weakMatchedSignals.length + result.weakMissingSignals.length > 0
+        ? `, weak ${result.weakMatchedSignals.length} matched / ${result.weakMissingSignals.length} missing`
+        : '';
+    return `coverage ${(result.weightedCoverage * 100).toFixed(0)}%, ${result.matchedSignals.length} matched, ${result.missingSignals.length} missing evidence, ${result.contextDifferences.length} context differences${weakSuffix}`;
+  },
   extractEvidence: (result) =>
-    result.matchedSignals.flatMap((signal) => signal.evidence).slice(0, 10),
+    [...result.matchedSignals, ...result.weakMatchedSignals]
+      .flatMap((signal) => signal.evidence)
+      .slice(0, 10),
   traceMeta: (result) => result.meta,
 };

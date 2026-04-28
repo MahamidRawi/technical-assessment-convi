@@ -21,6 +21,12 @@ export interface CaseNode {
   isOverdue: boolean | null;
   mainInjury: string | null;
   aiGeneratedSummary: string | null;
+  // SLA fields from financial projection (per-stage SLA evaluation)
+  slaStatus: string | null;
+  slaForCurrentStage: string | null;
+  slaDetails: string | null;
+  daysInCurrentStage: number | null;
+  expectedCompletionDate: string | null;
 }
 
 export interface ContactNode {
@@ -110,6 +116,40 @@ export interface ActivityEventNode {
   action: string;
   summary: string | null;
   at: string | null;
+  source: string | null;
+  userName: string | null;
+  dueDate: string | null;
+  targetDate: string | null;
+  assigneeName: string | null;
+  documentType: string | null;
+  documentCategory: string | null;
+  fileName: string | null;
+  status: string | null;
+}
+
+export interface ConversationNode {
+  sourceId: string;
+  caseId: string;
+  sessionId: string | null;
+  userName: string | null;
+  caseType: string | null;
+  caseStatus: string | null;
+  status: string | null;
+  messageCount: number;
+  lastAgentUsed: string | null;
+  routingReason: string | null;
+  workAccidentFlag: boolean | null;
+  createdAt: string | null;
+  lastActivity: string | null;
+  triageCompletedAt: string | null;
+  submittedForReviewAt: string | null;
+  lastSummarizedAt: string | null;
+  accidentDate: string | null;
+  accidentType: string | null;
+  medicalTreatment: string | null;
+  currentStatus: string | null;
+  thresholdChecks: string[]; // ["statuteOfLimitations:PASS", ...]
+  thresholdAllPass: boolean | null;
 }
 
 export interface StageEventNode {

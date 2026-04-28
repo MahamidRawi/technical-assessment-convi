@@ -65,9 +65,12 @@ export async function runExplainReadinessDecision(
     cohortSize: pattern.cohortSize,
     cohortMemberCaseIds: pattern.cohortMemberCaseIds,
     observedCommonSignals: pattern.observedCommonSignals,
+    observedWeakSignals: pattern.observedWeakSignals,
     matchedSignals: comparison.matchedSignals,
     missingSignals: comparison.missingSignals,
     contextDifferences: comparison.contextDifferences,
+    weakMatchedSignals: comparison.weakMatchedSignals,
+    weakMissingSignals: comparison.weakMissingSignals,
     timelineEstimate: {
       timingStatus: estimate.timingStatus,
       remainingDaysMedian: estimate.remainingDaysMedian,
@@ -76,6 +79,9 @@ export async function runExplainReadinessDecision(
       behindByDaysMedian: estimate.behindByDaysMedian,
       behindByDaysP25: estimate.behindByDaysP25,
       behindByDaysP75: estimate.behindByDaysP75,
+      snapshotProxyTotalDaysMedian: estimate.snapshotProxyTotalDaysMedian,
+      snapshotProxyTotalDaysP25: estimate.snapshotProxyTotalDaysP25,
+      snapshotProxyTotalDaysP75: estimate.snapshotProxyTotalDaysP75,
       comparableCaseIds: estimate.comparableCaseIds,
       timingSources: estimate.timingSources,
     },
@@ -94,7 +100,9 @@ export async function runExplainReadinessDecision(
       ? `no reliable timing estimate; ${estimate.uncertaintyReasons.join('; ')}`
       : estimate.timingStatus === 'behind_historical_trajectory'
         ? `behind historical trajectory by median ${estimate.behindByDaysMedian} days`
-        : `median ${estimate.remainingDaysMedian} days to ${input.targetStage}`;
+        : estimate.timingStatus === 'snapshot_proxy'
+          ? `snapshot-proxy median ${estimate.snapshotProxyTotalDaysMedian} days from event to ${input.targetStage} (peer case-age, not transition duration)`
+          : `median ${estimate.remainingDaysMedian} days to ${input.targetStage}`;
   const summary = `${comparison.matchedSignals.length} signals matched, ${comparison.missingSignals.length} missing, ${timingSummary}`;
   return { artifact, summary, meta: comparison.meta };
 }

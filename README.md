@@ -31,6 +31,16 @@ npm run dev          # starts the Next.js UI at http://localhost:3000
 - `MONGODB_URI` — read-only source.
 - `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` — derived graph.
 
+**Agent tool mode**
+
+- `AGENT_TOOL_MODE` — defaults to `mcp`. Set `atomic` to use the legacy typed in-process tools.
+- `MCP_NEO4J_URL` — optional HTTP MCP endpoint. When omitted, the agent launches a local stdio MCP server.
+- `MCP_NEO4J_COMMAND` — local stdio command for the official Neo4j MCP binary (default `neo4j-mcp`).
+- `MCP_NEO4J_ARGS` — optional stdio args, either whitespace-separated or a JSON string array.
+- `MCP_NEO4J_ALLOWED_TOOLS` — comma-separated Neo4j MCP tools exposed to the model (default `get-schema,read-cypher`).
+- `MCP_NEO4J_ALLOW_WRITE` — must remain unset/false in normal use; write-capable MCP tools are refused unless this is explicitly `true`.
+- `MCP_NEO4J_HEADERS_JSON` — optional JSON object of headers for HTTP MCP transport.
+
 **Tracing & evals (optional)**
 
 - `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`, `LANGFUSE_PROMPT_LABEL` — when set, every tool call emits an OpenTelemetry span and prompts can be overridden remotely.
@@ -40,7 +50,7 @@ npm run dev          # starts the Next.js UI at http://localhost:3000
 
 - `SKIP_LLM_HEALTH_CHECK`, `SKIP_NEO4J_HEALTH_CHECK` — skip the corresponding startup probe.
 - `BOOTSTRAP_INGEST` — set by `npm run setup` to chain ingest after schema.
-- `AGENT_ADVANCED_TOOLS` — `true` exposes `getCaseGraphContext` to the agent (off by default to keep the tool surface focused).
+- `AGENT_ADVANCED_TOOLS` — legacy atomic mode only: `true` exposes `getCaseGraphContext` and `runReadOnlyCypher`.
 - `ALLOW_TEST_GRAPH_LOAD` — guards `load-test-graph.ts`; only set inside the integration test runner.
 
 ## Model provider

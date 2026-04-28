@@ -17,6 +17,9 @@ function timingText(artifact: ReadinessDecisionArtifact): string {
   if (estimate.timingStatus === 'behind_historical_trajectory') {
     return `behind historical trajectory by median ${estimate.behindByDaysMedian}d (p25 ${estimate.behindByDaysP25 ?? 'n/a'} / p75 ${estimate.behindByDaysP75 ?? 'n/a'})`;
   }
+  if (estimate.timingStatus === 'snapshot_proxy') {
+    return `snapshot-proxy median ${estimate.snapshotProxyTotalDaysMedian}d from event to stage (p25 ${estimate.snapshotProxyTotalDaysP25 ?? 'n/a'} / p75 ${estimate.snapshotProxyTotalDaysP75 ?? 'n/a'}) — peer case-age, not transition duration`;
+  }
   return `median ${estimate.remainingDaysMedian}d (p25 ${estimate.remainingDaysP25 ?? 'n/a'} / p75 ${estimate.remainingDaysP75 ?? 'n/a'})`;
 }
 
@@ -71,6 +74,24 @@ export function ReadinessDecisionPanel({
           <div style={{ fontSize: '12px', color: '#374151' }}>
             {artifact.contextDifferences.map((signal) => signal.label).join(', ')}
           </div>
+        </div>
+      )}
+
+      {(artifact.weakMatchedSignals.length > 0 || artifact.weakMissingSignals.length > 0) && (
+        <div style={{ marginBottom: '8px', paddingLeft: '8px', borderLeft: '2px solid #d1d5db' }}>
+          <div style={{ ...sectionTitle, color: '#6b7280' }}>
+            Weak signals (sub-threshold; supplementary only)
+          </div>
+          {artifact.weakMatchedSignals.length > 0 && (
+            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+              matched: {artifact.weakMatchedSignals.map((signal) => signal.label).join(', ')}
+            </div>
+          )}
+          {artifact.weakMissingSignals.length > 0 && (
+            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+              missing: {artifact.weakMissingSignals.map((signal) => signal.label).join(', ')}
+            </div>
+          )}
         </div>
       )}
 
