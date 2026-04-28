@@ -9,6 +9,8 @@ import { normalizeCaseNode } from './ingest/normalize';
 import { extractRowsFromCase, type ExtractedRows } from './ingest/extract';
 import { writeCases, writeContactsAndClients } from './ingest/writeCore';
 import { writeDocuments, writeCommunications } from './ingest/writeContent';
+import { writeDocumentContentAndFacts } from './ingest/documentContent';
+import { writeCaseValuations } from './ingest/writeValuations';
 import { writeStages, writeInjuriesAndBodyParts, writeInsurers, writeExperts } from './ingest/writeTaxonomy';
 import { writeReachedStages, backfillCurrentStageEvents } from './ingest/writeActivity';
 import { runClear } from './ingest/clear';
@@ -85,7 +87,9 @@ async function writeAll(
     await writeCases(session, nodeList);
     const contacts = await writeContactsAndClients(session, db, fetchLimit, nodeList, caseIds);
     await writeDocuments(session, db, fetchLimit, caseIds);
+    await writeDocumentContentAndFacts(session, db, fetchLimit, caseIds);
     await writeCommunications(session, db, fetchLimit, caseIds, contacts);
+    await writeCaseValuations(session, db, fetchLimit, caseIds);
     await writeStages(session, nodeList);
     await writeInjuriesAndBodyParts(session, rows.injuryRows, rows.bodyPartRows);
     await writeInsurers(session, rows.insurerRows);

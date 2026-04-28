@@ -93,6 +93,17 @@ unprovable.
 *Rejected:* file paths or names as the join key: they're display metadata, not
 identity.
 
+### DocumentChunk and EvidenceFact
+
+OCR content is modeled below `Document`, not on `Case` or `Document`.
+`DocumentChunk` keeps bounded OCR text and source links for retrieval;
+`EvidenceFact` stores deterministic facts extracted from the chunk
+(`disability_period`, `regulation_15`, `nii_decision`, `appeal_deadline`,
+`required_document`, `income_evidence`, `medical_committee`, `work_accident`).
+Every fact links back to both the document and chunk that support it.
+*Rejected:* prompting over full OCR blobs; the agent receives concise snippets
+and source-linked facts only.
+
 ### Communication
 
 A node because direction, timing, participants, subject, transcript, and case
@@ -158,6 +169,15 @@ For each cohort: `support`, `lift`, `weight = support · log1p(lift)`,
 *Rejected:* hardcoded checklist of "what's needed to file"; the assessment
 asks for readiness inferred from observed historical graph patterns, not encoded readiness.
 
+### CaseValuation and DamageComponent
+
+Financial projections are modeled as separate valuation evidence, not flattened
+onto `Case`. `CaseValuation` carries compensation and fee ranges; typed
+`DamageComponent` nodes preserve the basis for value reasoning across comparable
+cases.
+*Rejected:* using one `Case.totalValue` property; the agent needs ranges,
+components, and provenance to caveat value answers honestly.
+
 ## 5. Edges: rationale and rejected alternatives
 
 
@@ -178,7 +198,7 @@ asks for readiness inferred from observed historical graph patterns, not encoded
 | Not modeled                                         | Reason                                                                                                             |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Chat history / conversational memory                | Each request is independent. State belongs in the application layer, not the reasoning graph                       |
-| Full OCR text and email body content as graph nodes | Useful for embedding but not for traversal; we keep `textPreview` (≤500 chars) and OCR stays in Mongo              |
+| Full communication bodies as graph nodes            | Communication bodies remain outside the graph; OCR is now modeled separately as `DocumentChunk` + `EvidenceFact` so document substance is queryable with provenance |
 | File version history (`versions[]`)                 | We keep `DERIVED_FROM` for parent provenance only. Full version DAGs don't change readiness answers                |
 | `niTrack` (national-insurance dual-track lifecycle) | Important for some workflows; out of scope for the readiness MVP because it doubles cohort dimensionality          |
 | `phase` as a separate dimension from `legalStage`   | Phase is a coarse rollup (`lead/active/closing/closed/rejected`) of stage; it stays as a Case property, not a node |
@@ -488,7 +508,7 @@ through the trace's evidence chips.
 | Signal-overlap similarity + cosine of case-summary embeddings, not a learned legal-relevance model                                     | Labeled relevance data doesn't exist yet; an unlabeled embedding is explainable and good enough                                                                                                                                                                 |
 | Cohort thresholds are static (`MIN_COHORT_SIZE=5`, `MIN_SUPPORT=0.6`, `MIN_LIFT=1.5`)                                                  | Tunable in `constants/readiness.ts`. Dynamic thresholds need an eval set with stable ground truth; we have a starter eval set in `evals/golden-agent.jsonl`, not enough to tune                                                                                 |
 | Derived analytics are delete-and-rewrite per ingest                                                                                    | Simpler than versioned snapshots; sufficient for the case volume; production would want snapshot-versioned cohorts                                                                                                                                              |
-| OCR text and email body content stay in Mongo, not in graph                                                                            | Useful for embeddings, not for traversal; we keep `textPreview` (≤500 chars) on Communication                                                                                                                                                                   |
+| Communication body content stays in Mongo, not in graph                                                                                | OCR document text is graph-indexed as chunks/facts; communication bodies still stay out of graph storage except for `textPreview` (≤500 chars) on Communication                                                                                                  |
 
 
 ## 16. What I'd do with more time

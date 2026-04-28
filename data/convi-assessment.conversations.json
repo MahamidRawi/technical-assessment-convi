@@ -1,0 +1,865 @@
+[{
+  "_id": {
+    "$oid": "694d52b1e58954b7fb7c78c4"
+  },
+  "sessionId": "session_694d52af7d527a748d480102_user_37LGmTrH5KWXzuMATJgQMp5TnQe",
+  "caseId": "694d52af7d527a748d480103",
+  "clerkUserId": "user_37LGmTrH5KWXzuMATJgQMp5TnQe",
+  "createdAt": {
+    "$date": "2025-12-25T15:05:21.207Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-26T09:34:53.441Z"
+  },
+  "messageCount": 685,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-03-26T09:34:53.441Z"
+  },
+  "userId": "694d52af7d527a748d480102",
+  "userName": "בן דיין",
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentMinor",
+  "caseType": "car_accident_minor",
+  "routingReason": "תאונת דרכים שהתרחשה במהלך העבודה, הלקוח סובל מכאבי גב המפריעים לשינה. נותב לסוכן תאונות עבודה מכיוון שהתאונה קרתה במהלך העבודה, ולא רשלנות.",
+  "triageCompletedAt": {
+    "$date": "2025-12-25T15:08:20.674Z"
+  },
+  "triageSummary": {
+    "accidentDate": "2024-01-10",
+    "accidentType": "תאונת דרכים",
+    "medicalTreatment": "באותו יום",
+    "currentStatus": "עדיין סובל מכאבי גב המפריעים לשינה",
+    "thresholdChecks": {
+      "statuteOfLimitations": "PASS",
+      "medicalTreatment": "PASS",
+      "insurance": "NA",
+      "license": "NA"
+    }
+  },
+  "workAccidentFlag": false,
+  "isPinned": false,
+  "lastSummarizedAt": {
+    "$date": "2026-03-26T09:45:06.023Z"
+  },
+  "lastSummarizedMessageId": "69c4fdbdb74ada3efa41b67e",
+  "caseStatus": "pending_review",
+  "submittedForReviewAt": {
+    "$date": "2026-02-09T21:18:14.000Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69563df88f3a7575f123033f"
+  },
+  "sessionId": "session_69563df57a3b5122528ba2d5_user_37eNZaWPDuq5pfS3kmEncaU8aBw",
+  "caseId": "69545b78351a0628ee95728a",
+  "clerkUserId": "user_37eNZaWPDuq5pfS3kmEncaU8aBw",
+  "createdAt": {
+    "$date": "2026-01-01T09:27:20.120Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-04T08:38:22.008Z"
+  },
+  "messageCount": 35,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-03-04T08:38:22.008Z"
+  },
+  "userId": "69563df57a3b5122528ba2d5",
+  "userName": "Jillian Baker",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-03-04T09:00:05.096Z"
+  },
+  "lastSummarizedMessageId": "69a7ef7d3a8e4120d8da641c"
+},
+{
+  "_id": {
+    "$oid": "695a21f88f3a7575f12303d1"
+  },
+  "sessionId": "session_695a21f611588beee325343f_user_37miMM2AEhII11i0ldeo1udSc4H",
+  "caseId": "693ddf5c1175cc0d11bc286d",
+  "clerkUserId": "user_37miMM2AEhII11i0ldeo1udSc4H",
+  "createdAt": {
+    "$date": "2026-01-04T08:16:56.184Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-10T17:23:34.445Z"
+  },
+  "messageCount": 0,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-10T17:23:34.445Z"
+  },
+  "userId": "695a21f611588beee325343f",
+  "userName": "גילה סולומון",
+  "caseType": "car_accident_serious",
+  "workAccidentFlag": true
+},
+{
+  "_id": {
+    "$oid": "695a5b348f3a7575f12303e2"
+  },
+  "sessionId": "session_695a5b32156392e625b4f7bc_user_37nC5KXm3RfKwcR5EwkVw2BJHH1",
+  "caseId": "695a5b32156392e625b4f7bd",
+  "clerkUserId": "user_37nC5KXm3RfKwcR5EwkVw2BJHH1",
+  "createdAt": {
+    "$date": "2026-01-04T12:21:08.070Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-12T17:52:49.120Z"
+  },
+  "messageCount": 65,
+  "status": "awaiting_lawyer_can_proceed",
+  "updatedAt": {
+    "$date": "2026-04-12T17:52:49.120Z"
+  },
+  "userId": "695a5b32156392e625b4f7bc",
+  "userName": "אושר סגל",
+  "lastAgentUsed": "CarAccidentMinorAgent",
+  "caseType": "car_accident_minor",
+  "routingReason": "אירוע פרטי, פגיעה באגודל מדלת רכב, עדיין סובל מנפיחות וכאבים, אובחנה תסמונת התעלה הקרפלית קלה.",
+  "triageCompletedAt": {
+    "$date": "2026-01-04T12:22:55.022Z"
+  },
+  "triageSummary": {
+    "accidentDate": "2025-10-04",
+    "accidentType": "תאונת דרכים",
+    "role": "driver",
+    "medicalTreatment": "תוך מספר ימים",
+    "currentStatus": "עדיין סובל",
+    "thresholdChecks": {
+      "statuteOfLimitations": "PASS",
+      "medicalTreatment": "WARN",
+      "insurance": "NA",
+      "license": "NA"
+    }
+  },
+  "workAccidentFlag": false,
+  "lastSummarizedAt": {
+    "$date": "2026-04-12T18:15:05.527Z"
+  },
+  "lastSummarizedMessageId": "69dbdb0fb3f81c8977f832dc",
+  "escalation": {
+    "reason": "לקוח עם תאונת דרכים קלה, אבל התגלתה גם תאונת עבודה קודמת עם 48% נכות. הלקוח הביע רצון להתמקד רק בתאונת הדרכים, אך צריך להדגיש את הפוטנציאל הגבוה יותר בתאונת העבודה ולבקש החלטה סופית ממנו על איזה תיק להתמקד, או האם לטפל בשניהם.",
+    "urgency": "normal",
+    "clientSentiment": "האם אתה עדיין מעוניין להתמקד אך ורק בתאונת הדרכים הזו, או שתרצה שנתנאל יבחן גם את האפשרות לטיפול בתביעת תאונת העבודה (עם ה-48% נכות), או אפילו בטיפול בשני המקרים במקביל?",
+    "escalatedAt": {
+      "$date": "2026-03-05T08:59:53.980Z"
+    },
+    "autoResponseCount": 0,
+    "isOutsideWorkingHours": false,
+    "canProceed": true,
+    "lawyerBrief": "הלקוח בועז שכטר, נפגע באגודל ימין בתאונת דרכים ב-12/10/2025. קיימת גם תביעת תאונת עבודה קודמת מ-2023 עם 48% נכות צמיתה. יש צורך בהכוונה מהלקוח איזה תיק הוא מעדיף לקדם או האם לקדם את שניהם, ובהתאם לכך לתת לו הנחייה."
+  }
+},
+{
+  "_id": {
+    "$oid": "696531130dfafd9a62608350"
+  },
+  "sessionId": "session_69653111a161c5a0bf45b897_user_38APP3aZyNuyVd4aYE4h5jNdp9t",
+  "caseId": "69545909351a0628ee956e10",
+  "clerkUserId": "user_38APP3aZyNuyVd4aYE4h5jNdp9t",
+  "createdAt": {
+    "$date": "2026-01-12T17:36:19.993Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-20T11:45:20.643Z"
+  },
+  "messageCount": 253,
+  "status": "awaiting_lawyer",
+  "updatedAt": {
+    "$date": "2026-04-20T11:43:38.540Z"
+  },
+  "userId": "69653111a161c5a0bf45b897",
+  "userName": "גיא גרינברג",
+  "caseStatus": null,
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-04-20T12:00:05.548Z"
+  },
+  "lastSummarizedMessageId": "69e611d0a3699a4e5fba31a3",
+  "escalation": {
+    "reason": "הלקוח מבקש במפורש שיחת טלפון ופרטים מעו\"ד נתנאל לפני הוועדה בביטוח לאומי.",
+    "urgency": "normal",
+    "clientSentiment": "\"אני צריך פרטים שנתנאל ידבר איתי\"",
+    "escalatedAt": {
+      "$date": "2026-04-15T09:43:41.948Z"
+    },
+    "autoResponseCount": 2,
+    "isOutsideWorkingHours": false,
+    "canProceed": false,
+    "lawyerBrief": "גאיה אלון מבקש באופן מפורש שיחזור אליו לפני הוועדה בביטוח לאומי כדי לקבל הנחיות ופרטים."
+  }
+},
+{
+  "_id": {
+    "$oid": "698b02ccc6f27f01237dab5b"
+  },
+  "sessionId": "session_698b02cac70056c2c37f0e0f_user_39TR5VohxgQFAENOJIWJcvkOG3M",
+  "caseId": "698b02cac70056c2c37f0e10",
+  "clerkUserId": "user_39TR5VohxgQFAENOJIWJcvkOG3M",
+  "createdAt": {
+    "$date": "2026-02-10T10:05:00.046Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-14T06:01:44.617Z"
+  },
+  "messageCount": 125,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-14T06:01:44.617Z"
+  },
+  "userId": "698b02cac70056c2c37f0e0f",
+  "userName": "יואב מלמד",
+  "lastAgentUsed": "IntakeAgent",
+  "caseType": "car_accident_serious",
+  "routingReason": "תאונת דרכים בדרך לעבודה, עדיין סובלת מכאבים, החמרה במצב",
+  "triageCompletedAt": {
+    "$date": "2026-02-10T10:06:31.625Z"
+  },
+  "triageSummary": {
+    "accidentDate": "2025-08-31",
+    "accidentType": "תאונת דרכים",
+    "role": "נהג",
+    "medicalTreatment": "התפנתה למיון",
+    "currentStatus": "עדיין סובלת מכאבים, החמרה במצב",
+    "thresholdChecks": {
+      "statuteOfLimitations": "PASS",
+      "medicalTreatment": "PASS",
+      "insurance": "NA",
+      "license": "NA"
+    }
+  },
+  "workAccidentFlag": true,
+  "lastSummarizedAt": {
+    "$date": "2026-02-10T10:45:01.537Z"
+  },
+  "lastSummarizedMessageId": "698b093ace208aa6cade1656"
+},
+{
+  "_id": {
+    "$oid": "6991b13841da475a7a9c89d0"
+  },
+  "sessionId": "session_6991b136b81a504283bc7953_user_39hkacgkY7tP31PApK9EJjt88Ja",
+  "caseId": "69545ba9351a0628ee9572f9",
+  "clerkUserId": "user_39hkacgkY7tP31PApK9EJjt88Ja",
+  "createdAt": {
+    "$date": "2026-02-15T11:42:48.892Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-09T12:29:50.422Z"
+  },
+  "messageCount": 23,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-14T11:32:44.782Z"
+  },
+  "userId": "6991b136b81a504283bc7953",
+  "userName": "עופרי זכריה",
+  "caseType": "liability",
+  "routingReason": "הפגיעה נגרמה מנפילה במתקן נינג׳ה, מה שמהווה אירוע חבויות וככל הנראה מכוסה במסגרת ביטוח תלמידים. המסמכים שהועלו תומכים בנזק פיזי ונפשי משמעותי.",
+  "triageCompletedAt": {
+    "$date": "2026-02-16T11:23:45.872Z"
+  },
+  "triageSummary": {
+    "accidentDate": "לא צויין תאריך מדויק במסמכים החדשים, אך סביב ינואר 2024 / לפני כשנתיים",
+    "accidentType": "חבויות",
+    "role": "נפגעת",
+    "medicalTreatment": "פנתה לטיפול רפואי לאחר האירוע ועדיין מטופלת",
+    "currentStatus": "עדיין סובלת מכאבים ומגבלות פיזיות ונפשיות",
+    "thresholdChecks": {
+      "statuteOfLimitations": "PASS",
+      "medicalTreatment": "PASS",
+      "insurance": "NA",
+      "license": "NA"
+    }
+  },
+  "workAccidentFlag": false,
+  "caseStatus": "in_progress",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-Liability"
+},
+{
+  "_id": {
+    "$oid": "69b7f0026c49e9121f3d09a0"
+  },
+  "sessionId": "session_69b30e620fc4b60d02b88c41_user_3ArEUIeBT5WXPe17Nks1zv3TExX",
+  "caseId": "693de7ee1175cc0d11bc2e9f",
+  "clerkUserId": "user_3ArEUIeBT5WXPe17Nks1zv3TExX",
+  "createdAt": {
+    "$date": "2026-03-16T11:56:50.439Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-02T17:56:29.436Z"
+  },
+  "messageCount": 25,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-02T17:56:29.436Z"
+  },
+  "userId": "69b30e620fc4b60d02b88c41",
+  "userName": "נועם שפירא",
+  "caseStatus": null,
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious"
+},
+{
+  "_id": {
+    "$oid": "6954fd0e8f3a7575f122f529"
+  },
+  "sessionId": "session_6954fd0ce2ff59a365fb948c_user_37bh3tpkTf8SXpiy6viDn9NjAvv",
+  "caseId": "6938755a65d3d3eb1c996885",
+  "clerkUserId": "user_37bh3tpkTf8SXpiy6viDn9NjAvv",
+  "createdAt": {
+    "$date": "2025-12-31T10:38:06.855Z"
+  },
+  "lastActivity": {
+    "$date": "2025-12-31T10:43:57.956Z"
+  },
+  "messageCount": 0,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2025-12-31T10:43:57.956Z"
+  },
+  "userId": "6954fd0ce2ff59a365fb948c",
+  "userName": "[שם או מונח הוסר באנונימיזציה]"
+},
+{
+  "_id": {
+    "$oid": "695a61c88f3a7575f12303e4"
+  },
+  "sessionId": "session_695a61c6156392e625b4f7ce_user_37nFV8bpxIdfOSqUI9HB2uidGU9",
+  "caseId": "6938761f65d3d3eb1c99697b",
+  "clerkUserId": "user_37nFV8bpxIdfOSqUI9HB2uidGU9",
+  "createdAt": {
+    "$date": "2026-01-04T12:49:12.306Z"
+  },
+  "lastActivity": {
+    "$date": "2026-02-02T10:36:48.891Z"
+  },
+  "messageCount": 1,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-02-02T10:36:48.891Z"
+  },
+  "userId": "695a61c6156392e625b4f7ce",
+  "userName": "איתן ארליך",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T09:44:27.603Z"
+  },
+  "lastSummarizedMessageId": "69807ecad66990362659d765"
+},
+{
+  "_id": {
+    "$oid": "695a73238f3a7575f12303e8"
+  },
+  "sessionId": "session_695a7321c0f24d3b1514bb08_user_37nOVKxZAMKD53Ehgl0lMsKWHii",
+  "caseId": "693875b965d3d3eb1c9968fd",
+  "clerkUserId": "user_37nOVKxZAMKD53Ehgl0lMsKWHii",
+  "createdAt": {
+    "$date": "2026-01-04T14:03:15.200Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-09T19:01:45.384Z"
+  },
+  "messageCount": 7,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-09T19:01:45.384Z"
+  },
+  "userId": "695a7321c0f24d3b1514bb08",
+  "userName": "גל בקר",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-WorkAccident",
+  "workAccidentFlag": true,
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T01:58:28.830Z"
+  },
+  "lastSummarizedMessageId": "69614e5783083b1bdf5098af"
+},
+{
+  "_id": {
+    "$oid": "695f797a8f3a7575f1230513"
+  },
+  "sessionId": "session_695f797858b3df544e6d5141_user_37y9y445EDZeWchNs9wqjdh3Dgz",
+  "caseId": "695458f1351a0628ee956de9",
+  "clerkUserId": "user_37y9y445EDZeWchNs9wqjdh3Dgz",
+  "createdAt": {
+    "$date": "2026-01-08T09:31:38.967Z"
+  },
+  "lastActivity": {
+    "$date": "2026-02-12T09:38:49.435Z"
+  },
+  "messageCount": 11,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-02-12T09:38:49.435Z"
+  },
+  "userId": "695f797858b3df544e6d5141",
+  "userName": "Brett Davis",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T01:58:32.776Z"
+  },
+  "lastSummarizedMessageId": "6978b10728b8eef5f2418d2b"
+},
+{
+  "_id": {
+    "$oid": "695ff2b48f3a7575f123053c"
+  },
+  "sessionId": "session_695ff2b24ccebecac6e4e102_user_37zArrVUDpojnY9i5iDPuWjH2Ya",
+  "caseId": "69545bdd351a0628ee957353",
+  "clerkUserId": "user_37zArrVUDpojnY9i5iDPuWjH2Ya",
+  "createdAt": {
+    "$date": "2026-01-08T18:08:52.325Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-15T20:34:37.045Z"
+  },
+  "messageCount": 29,
+  "status": "controlled",
+  "updatedAt": {
+    "$date": "2026-03-15T20:34:37.045Z"
+  },
+  "userId": "695ff2b24ccebecac6e4e102",
+  "userName": "Lisa Dudley",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-03-10T20:00:01.385Z"
+  },
+  "lastSummarizedMessageId": "69b073353d957e8c497b2a0d",
+  "controlTakenAt": {
+    "$date": "2026-03-10T19:10:07.964Z"
+  },
+  "controlledBy": "user_36y2kJWXSJk7d43ym4IiThISSau"
+},
+{
+  "_id": {
+    "$oid": "6960bfa08f3a7575f123055d"
+  },
+  "sessionId": "session_6960bf9efa68b6eae68db90b_user_380t9IgxFAuOzC92fqA6Hj6keyS",
+  "caseId": "6960bf9efa68b6eae68db90c",
+  "clerkUserId": "user_380t9IgxFAuOzC92fqA6Hj6keyS",
+  "createdAt": {
+    "$date": "2026-01-09T08:43:12.567Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-20T06:31:46.724Z"
+  },
+  "messageCount": 57,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-20T06:31:46.724Z"
+  },
+  "userId": "6960bf9efa68b6eae68db90b",
+  "userName": "איתי שולמית זיו",
+  "lastAgentUsed": "CaseSuccessManager-GeneralDisability",
+  "caseType": "general_disability",
+  "workAccidentFlag": false,
+  "lastSummarizedAt": {
+    "$date": "2026-04-12T07:45:01.196Z"
+  },
+  "lastSummarizedMessageId": "69db486484b1259d865f3bed"
+},
+{
+  "_id": {
+    "$oid": "6966e7b7f653374c5d7a7abe"
+  },
+  "sessionId": "session_696005d78e1d761f2372c9fe_user_37zKnol79KsSRjYacIZ46hBzCuj",
+  "caseId": "6938750465d3d3eb1c996838",
+  "clerkUserId": "user_37zKnol79KsSRjYacIZ46hBzCuj",
+  "createdAt": {
+    "$date": "2026-01-14T00:47:51.041Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-08T15:48:08.720Z"
+  },
+  "messageCount": 3,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-03-08T15:48:12.272Z"
+  },
+  "userId": "696005d78e1d761f2372c9fe",
+  "userName": "אהרון גולדשטיין",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastSummarizedAt": {
+    "$date": "2026-03-08T16:00:05.101Z"
+  },
+  "lastSummarizedMessageId": "69ad9a3802809c49bece23de"
+},
+{
+  "_id": {
+    "$oid": "69673dc2f653374c5d7a7ad2"
+  },
+  "sessionId": "session_69673dc0c0875bff8ec6cf28_user_38EneibGea2fA28fBDp6spwmpeX",
+  "caseId": "693875ca65d3d3eb1c99691d",
+  "clerkUserId": "user_38EneibGea2fA28fBDp6spwmpeX",
+  "createdAt": {
+    "$date": "2026-01-14T06:54:58.132Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-14T06:55:18.878Z"
+  },
+  "messageCount": 2,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-14T06:55:18.878Z"
+  },
+  "userId": "69673dc0c0875bff8ec6cf28",
+  "userName": "Robert Garcia",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T09:44:27.603Z"
+  },
+  "lastSummarizedMessageId": "69673dd685a02c3c9e72ab0a"
+},
+{
+  "_id": {
+    "$oid": "6969150d0aaf07290b93f2c3"
+  },
+  "sessionId": "session_6969150b4ca5c69d15a6bf0e_user_38IkCdod1RlRuLWdUdEH0nhEL90",
+  "caseId": "6938746a65d3d3eb1c99679d",
+  "clerkUserId": "user_38IkCdod1RlRuLWdUdEH0nhEL90",
+  "createdAt": {
+    "$date": "2026-01-15T16:25:49.237Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-22T16:53:26.025Z"
+  },
+  "messageCount": 5,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-22T16:53:26.025Z"
+  },
+  "userId": "6969150b4ca5c69d15a6bf0e",
+  "userName": "עוזרי סארה",
+  "caseStatus": "in_progress",
+  "caseType": "liability",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-Liability",
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T01:58:32.232Z"
+  },
+  "lastSummarizedMessageId": "69725606cbc43a6757e9ee52"
+},
+{
+  "_id": {
+    "$oid": "6975fbe3d2972f68f9c99548"
+  },
+  "sessionId": "session_6975fbe1189b1409e550cbf0_user_38kNzXQoS7qH03YK9xOsQ3i95Ro",
+  "caseId": "696239697db635c0c4c1e5cd",
+  "clerkUserId": "user_38kNzXQoS7qH03YK9xOsQ3i95Ro",
+  "createdAt": {
+    "$date": "2026-01-25T11:17:55.802Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-19T10:17:28.819Z"
+  },
+  "messageCount": 17,
+  "status": "awaiting_lawyer",
+  "updatedAt": {
+    "$date": "2026-04-19T10:13:50.026Z"
+  },
+  "userId": "6975fbe1189b1409e550cbf0",
+  "userName": "רועי אסולין",
+  "caseStatus": null,
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-04-19T10:30:01.518Z"
+  },
+  "lastSummarizedMessageId": "69e4abb883b4038103b45371",
+  "escalation": {
+    "reason": "הלקוח ביקש במפורש שעו\"ד נתנאל יצור איתו קשר ולהתייעץ לגבי המשך טיפול, כולל אפשרות לפסיכיאטר פרטי — זו בקשה שמצריכה התערבות עורך דין.",
+    "urgency": "normal",
+    "clientSentiment": "\"אבקש בזאת מעורך הדין נתנאל רוט שייצור איתי קשר להמשך טיפול בתביעה. אולי נשקול לקחת פסיכיאטר פרטי.\"",
+    "escalatedAt": {
+      "$date": "2026-04-13T14:11:13.493Z"
+    },
+    "autoResponseCount": 7,
+    "isOutsideWorkingHours": false,
+    "canProceed": false,
+    "lawyerBrief": "הלקוח מדווח כי עקב מלחמות וחגים לא הצליח להגיע לפסיכולוג עד כה; תור ראשון לפסיכולוג רק ביום חמישי הקרוב. מאוחדת קבעה תור לפסיכיאטר רק בעוד כחצי שנה. הלקוח שוקל פסיכיאטר פרטי ומבקש במפורש לדבר עם עו\"ד נתנאל רוט. נדרש מענה אנושי והכוונה לגבי המשך הטיפול והתיק."
+  }
+},
+{
+  "_id": {
+    "$oid": "6978e8dbd2972f68f9c9961f"
+  },
+  "sessionId": "session_6978e8d94f616039e2c63319_user_38qecP9z7ruXtLK3rmKGyLzn69E",
+  "caseId": "693875a765d3d3eb1c9968de",
+  "clerkUserId": "user_38qecP9z7ruXtLK3rmKGyLzn69E",
+  "createdAt": {
+    "$date": "2026-01-27T16:33:31.078Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-27T16:36:00.912Z"
+  },
+  "messageCount": 6,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-29T10:56:04.319Z"
+  },
+  "userId": "6978e8d94f616039e2c63319",
+  "userName": "שחר רובין",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-WorkAccident",
+  "workAccidentFlag": true,
+  "lastSummarizedAt": {
+    "$date": "2026-02-05T01:58:20.156Z"
+  },
+  "lastSummarizedMessageId": "6978e9706c2e6dcac7848ada"
+},
+{
+  "_id": {
+    "$oid": "697915f9d2972f68f9c99621"
+  },
+  "sessionId": "session_697915f7f191d2ecad14b4a6_user_38r1zEq9D5UD5VmQvBQ9Ko7s9Nm",
+  "caseId": "693de9581175cc0d11bc2fd1",
+  "clerkUserId": "user_38r1zEq9D5UD5VmQvBQ9Ko7s9Nm",
+  "createdAt": {
+    "$date": "2026-01-27T19:46:01.798Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-27T19:46:01.798Z"
+  },
+  "messageCount": 0,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-01-27T19:46:01.798Z"
+  },
+  "userId": "697915f7f191d2ecad14b4a6",
+  "userName": "איתי קאופמן"
+},
+{
+  "_id": {
+    "$oid": "6979ce71d2972f68f9c99626"
+  },
+  "sessionId": "session_6979ce6f6abdc29d04855e6a_user_38sZkNk6S519CiJA9rH67Pf3ZWd",
+  "caseId": "6938761465d3d3eb1c996967",
+  "clerkUserId": "user_38sZkNk6S519CiJA9rH67Pf3ZWd",
+  "createdAt": {
+    "$date": "2026-01-28T08:53:05.684Z"
+  },
+  "lastActivity": {
+    "$date": "2026-01-28T08:53:05.684Z"
+  },
+  "messageCount": 0,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-12T07:51:29.904Z"
+  },
+  "userId": "6979ce6f6abdc29d04855e6a",
+  "userName": "דביר צרפתי",
+  "caseType": "work_accident",
+  "workAccidentFlag": false
+},
+{
+  "_id": {
+    "$oid": "69884578c6f27f01237daad7"
+  },
+  "sessionId": "session_69884576b9e43d77e1a6f52a_user_39NZByiWThKr3eIYwhDntCkHNXO",
+  "caseId": "6954592b351a0628ee956e4a",
+  "clerkUserId": "user_39NZByiWThKr3eIYwhDntCkHNXO",
+  "createdAt": {
+    "$date": "2026-02-08T08:12:40.027Z"
+  },
+  "lastActivity": {
+    "$date": "2026-02-08T08:21:07.697Z"
+  },
+  "messageCount": 4,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-02-08T08:21:07.697Z"
+  },
+  "userId": "69884576b9e43d77e1a6f52a",
+  "userName": "Dylan Long",
+  "caseStatus": "in_progress",
+  "caseType": "liability",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-Liability",
+  "lastSummarizedAt": {
+    "$date": "2026-02-08T08:45:01.520Z"
+  },
+  "lastSummarizedMessageId": "698847739fb351ebad99afe4"
+},
+{
+  "_id": {
+    "$oid": "6989ef20c6f27f01237dab21"
+  },
+  "sessionId": "session_6989ef1d0756f5d0193154d8_user_39R818hl9sEDugzRGbh7ImBpyM4",
+  "caseId": "6938762b65d3d3eb1c99698d",
+  "clerkUserId": "user_39R818hl9sEDugzRGbh7ImBpyM4",
+  "createdAt": {
+    "$date": "2026-02-09T14:28:48.769Z"
+  },
+  "lastActivity": {
+    "$date": "2026-02-10T08:26:24.593Z"
+  },
+  "messageCount": 2,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-02-10T08:26:24.593Z"
+  },
+  "userId": "6989ef1d0756f5d0193154d8",
+  "userName": "תמר יוסופוב",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "CaseSuccessManager-CarAccidentSerious",
+  "lastSummarizedAt": {
+    "$date": "2026-02-09T17:00:01.927Z"
+  },
+  "lastSummarizedMessageId": "6989f1e259382a14d9d650f1"
+},
+{
+  "_id": {
+    "$oid": "6991e9ab41da475a7a9c89f6"
+  },
+  "sessionId": "session_6991e9a9f3bf3c9818bbfd6b_user_39iDti2Sskop3ub0MfEEZe9FtYM",
+  "caseId": "69545b35351a0628ee957210",
+  "clerkUserId": "user_39iDti2Sskop3ub0MfEEZe9FtYM",
+  "createdAt": {
+    "$date": "2026-02-15T15:43:39.213Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-05T21:16:12.010Z"
+  },
+  "messageCount": 22,
+  "status": "awaiting_lawyer_can_proceed",
+  "updatedAt": {
+    "$date": "2026-03-05T21:16:12.010Z"
+  },
+  "userId": "6991e9a9f3bf3c9818bbfd6b",
+  "userName": "רומי עמאש",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "DocumentSigningAgent",
+  "escalation": {
+    "reason": "הלקוח שואל שאלה משפטית מורכבת לגבי סיווג ניתוחי בקע כתאונה.",
+    "urgency": "normal",
+    "clientSentiment": "ניטרלי, שואל שאלה ישירה.",
+    "escalatedAt": {
+      "$date": "2026-03-02T15:53:18.181Z"
+    },
+    "autoResponseCount": 0,
+    "isOutsideWorkingHours": false,
+    "canProceed": true,
+    "lawyerBrief": "הלקוח, רומי עמאש, שואל האם ניתוחי בקע שעבר נחשבים לתאונה.\nהשאלה דורשת ייעוץ משפטי לגבי סיווג אירועים רפואיים כתאונה לצורך התיק."
+  }
+},
+{
+  "_id": {
+    "$oid": "699e72bd41da475a7a9c9f13"
+  },
+  "sessionId": "session_699e72bb40047f3d2770a11d_user_39aXCuTM2jjHy3fT02eGW3ms2AC",
+  "caseId": "693875bf65d3d3eb1c99690a",
+  "clerkUserId": "user_39aXCuTM2jjHy3fT02eGW3ms2AC",
+  "createdAt": {
+    "$date": "2026-02-25T03:55:41.742Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-19T18:12:04.379Z"
+  },
+  "messageCount": 0,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-04-19T18:12:04.379Z"
+  },
+  "userId": "699e72bb40047f3d2770a11d",
+  "userName": "חיים  לנא"
+},
+{
+  "_id": {
+    "$oid": "69a09b7b4a27ef8cf68bc08d"
+  },
+  "sessionId": "session_69a09b79209ff58a82086443_user_3ADhqUlJqZOfeCUPvunjvVRD2ZC",
+  "caseId": "695459fc351a0628ee956fc2",
+  "clerkUserId": "user_3ADhqUlJqZOfeCUPvunjvVRD2ZC",
+  "createdAt": {
+    "$date": "2026-02-26T19:14:03.704Z"
+  },
+  "lastActivity": {
+    "$date": "2026-03-15T17:34:40.804Z"
+  },
+  "messageCount": 6,
+  "status": "active",
+  "updatedAt": {
+    "$date": "2026-03-15T17:34:40.804Z"
+  },
+  "userId": "69a09b79209ff58a82086443",
+  "userName": "יוסף שחאדה",
+  "caseStatus": "in_progress",
+  "caseType": "car_accident_serious",
+  "isLegacyCase": true,
+  "lastAgentUsed": "DocumentSigningAgent"
+},
+{
+  "_id": {
+    "$oid": "69c56e705a6ecb60442df708"
+  },
+  "sessionId": "session_69c56e6e2df78a245b443fb4_user_3BUbLWtc9Y0e2h4RUKcQEoCRUhf",
+  "caseId": "697860dce2e4e8d9a2f71cb6",
+  "clerkUserId": "user_3BUbLWtc9Y0e2h4RUKcQEoCRUhf",
+  "createdAt": {
+    "$date": "2026-03-26T17:35:44.371Z"
+  },
+  "lastActivity": {
+    "$date": "2026-04-12T14:31:23.020Z"
+  },
+  "messageCount": 2,
+  "status": "resolved",
+  "updatedAt": {
+    "$date": "2026-04-13T09:00:04.905Z"
+  },
+  "userId": "69c56e6e2df78a245b443fb4",
+  "userName": "Bryan Wright",
+  "caseStatus": null,
+  "caseType": "student_accident",
+  "isLegacyCase": true,
+  "escalation": {
+    "reason": "הלקוח שואל מה צריך לומר או לדרוש בבדיקה אצל מומחה מטעם חברת הביטוח — זו שאלה שמוגדרת כמשפטית/אסטרטגית ודורשת הנחיה של עורך דין.",
+    "urgency": "normal",
+    "clientSentiment": "מחר בבוקר יש לנו ביקור אצל רופא מומחה תביעה בהוד השרון. יש משהו ספציפי שצריך לדרוש, לבקש, להגיד?",
+    "escalatedAt": {
+      "$date": "2026-04-12T14:31:18.153Z"
+    },
+    "autoResponseCount": 0,
+    "isOutsideWorkingHours": false,
+    "canProceed": true,
+    "lawyerBrief": "המשפחה בדרך לבדיקת מומחה מטעם איילון מחר בבוקר. הם מבקשים לדעת מה לומר או לבקש בבדיקה. נדרש ליווי אסטרטגי של עו\"ד.",
+    "resolution": "נשלחו הנחיות מפורטות ללקוח + שיחה טלפונית. הבדיקה בוצעה.",
+    "resolvedAt": {
+      "$date": "2026-04-13T09:00:04.905Z"
+    },
+    "resolvedBy": "cli:netanel"
+  },
+  "lastAgentUsed": "CaseSuccessManager-Liability"
+}]

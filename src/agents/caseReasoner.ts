@@ -12,6 +12,7 @@ import { buildAgentTools } from '@/tools/registry';
 import type { OnAgentStatus, OnReadinessDecision, OnStepTrace } from '@/types/stream.types';
 import type { TurnLogger } from '@/utils/turnLogger';
 import { getLanguageModel } from '@/llm/provider';
+import { buildTurnToolPolicy, nextRequiredTool } from './toolPolicy';
 
 const tracer = trace.getTracer('caseReasoner', '1.0.0');
 
@@ -40,11 +41,29 @@ export async function streamCaseReasonerResponse(
     parentSpan.setAttribute('langfuse.observation.input', userPromptText);
 
     const instructions = await resolveCaseReasonerSystemPrompt();
+    const turnToolPolicy = buildTurnToolPolicy(userPromptText);
+    const effectiveInstructions = turnToolPolicy
+      ? `${instructions}\n\n${turnToolPolicy.instructionSuffix}`
+      : instructions;
 
     const agent = new ToolLoopAgent<never, ToolSet, never>({
       model: getLanguageModel(),
-      instructions,
+      instructions: effectiveInstructions,
       tools,
+      ...(turnToolPolicy && {
+        activeTools: turnToolPolicy.activeTools,
+        prepareStep: ({ steps }) => {
+          const calledTools = steps.flatMap((step) =>
+            step.toolCalls.map((call) => String(call.toolName))
+          );
+          const nextTool = nextRequiredTool(turnToolPolicy.requiredToolSequence, calledTools);
+          if (!nextTool) return { activeTools: turnToolPolicy.activeTools };
+          return {
+            activeTools: [nextTool],
+            toolChoice: { type: 'tool' as const, toolName: nextTool },
+          };
+        },
+      }),
       stopWhen: stepCountIs(12),
       experimental_telemetry: {
         isEnabled: true,

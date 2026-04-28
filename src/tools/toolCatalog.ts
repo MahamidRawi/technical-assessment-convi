@@ -20,6 +20,11 @@ import { compareCaseToReadinessPatternTool } from './compareCaseToReadinessPatte
 import { estimateTimeToStageTool } from './estimateTimeToStage';
 import { listPortfolioContactsTool } from './listPortfolioContacts';
 import { listPortfolioExpertsTool } from './listPortfolioExperts';
+import { searchDocumentEvidenceTool } from './searchDocumentEvidence';
+import { getCaseDocumentFactsTool } from './getCaseDocumentFacts';
+import { findComparableCasesByFactsTool } from './findComparableCasesByFacts';
+import { getCaseValueContextTool } from './getCaseValueContext';
+import { searchCasesByMedicalEvidenceTool } from './searchCasesByMedicalEvidence';
 
 export type AddTool = <TSchema extends z.ZodTypeAny, TResult>(
   def: ToolDefinition<TSchema, TResult>
@@ -33,6 +38,8 @@ export const TOOL_ENTRIES = [
   { name: getCaseOverviewTool.name },
   { name: getCaseEvidenceTool.name },
   { name: getCaseDocumentsTool.name },
+  { name: searchDocumentEvidenceTool.name },
+  { name: getCaseDocumentFactsTool.name },
   { name: getCaseCommunicationsTool.name },
   { name: findSimilarCasesTool.name },
   { name: findSameStageLeadersTool.name },
@@ -41,9 +48,12 @@ export const TOOL_ENTRIES = [
   { name: getStageTimelineTool.name },
   { name: benchmarkAgainstStageTool.name },
   { name: searchCasesTool.name },
+  { name: searchCasesByMedicalEvidenceTool.name },
   { name: portfolioAggregatesTool.name },
   { name: listPortfolioContactsTool.name },
   { name: listPortfolioExpertsTool.name },
+  { name: findComparableCasesByFactsTool.name },
+  { name: getCaseValueContextTool.name },
   { name: rankCasesByStageTransitionTimeTool.name },
   { name: deriveReadinessPatternTool.name },
   { name: compareCaseToReadinessPatternTool.name },
@@ -56,6 +66,8 @@ export function forEachTool(addTool: AddTool): void {
   addTool(getCaseOverviewTool);
   addTool(getCaseEvidenceTool);
   addTool(getCaseDocumentsTool);
+  addTool(searchDocumentEvidenceTool);
+  addTool(getCaseDocumentFactsTool);
   addTool(getCaseCommunicationsTool);
   addTool(findSimilarCasesTool);
   addTool(findSameStageLeadersTool);
@@ -64,9 +76,12 @@ export function forEachTool(addTool: AddTool): void {
   addTool(getStageTimelineTool);
   addTool(benchmarkAgainstStageTool);
   addTool(searchCasesTool);
+  addTool(searchCasesByMedicalEvidenceTool);
   addTool(portfolioAggregatesTool);
   addTool(listPortfolioContactsTool);
   addTool(listPortfolioExpertsTool);
+  addTool(findComparableCasesByFactsTool);
+  addTool(getCaseValueContextTool);
   addTool(rankCasesByStageTransitionTimeTool);
   addTool(deriveReadinessPatternTool);
   addTool(compareCaseToReadinessPatternTool);

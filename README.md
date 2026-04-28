@@ -154,13 +154,14 @@ When the data genuinely doesn't support a question, the agent says so rather tha
 
 ## Privacy
 
-The most sensitive fields are excluded at the ingest layer and never enter the graph at all: ID numbers, bank account details, street/house number/postal code, full OCR text, and full communication bodies. Contact phone/email and communication subject/preview are carried into the graph for relational reasoning (dedup, participant edges) and pass through tool traces, local turn logs, and Langfuse exports unredacted. The `DESIGN.md` "What we deliberately did NOT model" table is the authoritative schema-level boundary; the "What I'd do with more time" section lists the trace-redaction layer and the contact-detail hashing decision as the first two production prerequisites.
+The most sensitive fields are excluded at the ingest layer and never enter the graph at all: ID numbers, bank account details, and street/house number/postal code. OCR is graph-indexed as `DocumentChunk` nodes plus source-linked `EvidenceFact` nodes so the agent can answer document-substance, disability, NII, missing-document, and value questions from graph queries rather than metadata alone. Full communication bodies are still not modeled; contact phone/email and communication subject/preview are carried into the graph for relational reasoning (dedup, participant edges) and pass through tool traces, local turn logs, and Langfuse exports unredacted.
 
 ### What leaves the box (per provider)
 
 | Path                                | Sent to                              | Payload                                                                                                                                              |
 | ----------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agent reasoning                     | OpenAI **or** Vertex (whichever `LLM_PROVIDER` resolves to) | The system prompt, the user message, and every tool input/output JSON — including raw Hebrew names, contact phone/email, and communication previews. |
+| OCR evidence tools                  | OpenAI **or** Vertex through agent reasoning only | Retrieved OCR snippets and extracted fact quotes returned by graph tools, capped before being sent to the model. Full OCR blobs are not returned by tools. |
 | Case-similarity embeddings          | OpenAI **or** Vertex (per `EMBEDDING_PROVIDER`) | One structured blob per case: `caseName`, `caseType`, `legalStage`, normalized injuries / body parts / insurers, document categories and types. **No** `aiGeneratedSummary`, **no** communication content, **no** contact email/phone. |
 | Trace export                        | Langfuse (only if `LANGFUSE_PUBLIC_KEY` is set) | Same payload as the agent reasoning path, plus Cypher + parameters for each tool call.                                                               |
 
