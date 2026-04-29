@@ -145,6 +145,20 @@ function queryTerms(query: string): string[] {
   ]);
 }
 
+export function buildMedicalEvidenceSearchTerms(
+  query: string,
+  requireNeurological = false,
+  requireSpine = false
+): string[] {
+  const neuroTerms = uniqueTerms(NEUROLOGICAL_TERMS);
+  const spineTerms = uniqueTerms(SPINE_TERMS);
+  return uniqueTerms([
+    ...queryTerms(query),
+    ...(requireNeurological ? neuroTerms : []),
+    ...(requireSpine ? spineTerms : []),
+  ]);
+}
+
 function fulltextQuery(terms: string[]): string {
   return terms
     .map((term) => term.replace(/[+\-&|!(){}[\]^"~*?:\\/]/g, '').trim())
@@ -158,7 +172,11 @@ async function execute(
 ): Promise<MedicalEvidenceCaseSearchResult> {
   const neuroTerms = uniqueTerms(NEUROLOGICAL_TERMS);
   const spineTerms = uniqueTerms(SPINE_TERMS);
-  const allTerms = uniqueTerms([...queryTerms(input.query), ...neuroTerms, ...spineTerms]);
+  const allTerms = buildMedicalEvidenceSearchTerms(
+    input.query,
+    input.requireNeurological === true,
+    input.requireSpine === true
+  );
   const params = {
     fulltextQuery: fulltextQuery(allTerms),
     allTerms,

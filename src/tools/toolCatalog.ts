@@ -23,6 +23,7 @@ import { listPortfolioExpertsTool } from './listPortfolioExperts';
 import { searchDocumentEvidenceTool } from './searchDocumentEvidence';
 import { getCaseDocumentFactsTool } from './getCaseDocumentFacts';
 import { findComparableCasesByFactsTool } from './findComparableCasesByFacts';
+import { findMostSimilarCasePairsTool } from './findMostSimilarCasePairs';
 import { getCaseValueContextTool } from './getCaseValueContext';
 import { searchCasesByMedicalEvidenceTool } from './searchCasesByMedicalEvidence';
 
@@ -53,6 +54,7 @@ export const TOOL_ENTRIES = [
   { name: listPortfolioContactsTool.name },
   { name: listPortfolioExpertsTool.name },
   { name: findComparableCasesByFactsTool.name },
+  { name: findMostSimilarCasePairsTool.name },
   { name: getCaseValueContextTool.name },
   { name: rankCasesByStageTransitionTimeTool.name },
   { name: deriveReadinessPatternTool.name },
@@ -81,6 +83,7 @@ export function forEachTool(addTool: AddTool): void {
   addTool(listPortfolioContactsTool);
   addTool(listPortfolioExpertsTool);
   addTool(findComparableCasesByFactsTool);
+  addTool(findMostSimilarCasePairsTool);
   addTool(getCaseValueContextTool);
   addTool(rankCasesByStageTransitionTimeTool);
   addTool(deriveReadinessPatternTool);

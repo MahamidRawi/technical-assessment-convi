@@ -29,6 +29,31 @@ export const formStyle: React.CSSProperties = {
   zIndex: 100,
 };
 
+export const formToolbarStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  minHeight: '28px',
+  marginBottom: '6px',
+};
+
+export const clearButtonStyle: React.CSSProperties = {
+  border: '1px solid #d8d8d8',
+  backgroundColor: '#ffffff',
+  color: '#555',
+  borderRadius: '6px',
+  fontSize: '12px',
+  fontWeight: 500,
+  padding: '4px 8px',
+  cursor: 'pointer',
+  boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+};
+
+export const clearButtonDisabledStyle: React.CSSProperties = {
+  ...clearButtonStyle,
+  color: '#aaa',
+  cursor: 'not-allowed',
+};
+
 export const inputWrapperStyle: React.CSSProperties = {
   position: 'relative',
   display: 'flex',

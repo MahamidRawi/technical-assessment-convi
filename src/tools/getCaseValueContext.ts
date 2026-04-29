@@ -8,7 +8,7 @@ import {
 import { resolveCaseId } from './_shared/notFound';
 import type { ToolDefinition } from './types';
 import {
-  comparableCasesInputSchema,
+  buildComparableCasesInputSchema,
   findComparableCasesByFacts,
   type ComparableCaseByFacts,
   type ComparableValuation,
@@ -42,9 +42,19 @@ export interface CaseValueContextResult {
   missingValueEvidence: string[];
 }
 
-const inputSchema = comparableCasesInputSchema.extend({
-  targetQuestion: z.string().optional(),
-});
+function buildInputSchema() {
+  return buildComparableCasesInputSchema().extend({
+    targetQuestion: z.string().optional(),
+  });
+}
+
+type GetCaseValueContextInputSchema = ReturnType<typeof buildInputSchema>;
+
+let _inputSchema: GetCaseValueContextInputSchema | null = null;
+function getInputSchema(): GetCaseValueContextInputSchema {
+  if (!_inputSchema) _inputSchema = buildInputSchema();
+  return _inputSchema;
+}
 
 const valuationRowSchema = z.object({
   valuationId: neo4jString,
@@ -163,7 +173,9 @@ function missingEvidence(
   return missing;
 }
 
-async function execute(input: z.infer<typeof inputSchema>): Promise<CaseValueContextResult> {
+async function execute(
+  input: z.infer<GetCaseValueContextInputSchema>
+): Promise<CaseValueContextResult> {
   const targetCaseId = emptyToNull(input.caseId) ? await resolveCaseId(input.caseId ?? '') : null;
   const comparableResult = await findComparableCasesByFacts({
     ...input,
@@ -191,10 +203,15 @@ async function execute(input: z.infer<typeof inputSchema>): Promise<CaseValueCon
   };
 }
 
-export const getCaseValueContextTool: ToolDefinition<typeof inputSchema, CaseValueContextResult> = {
+export const getCaseValueContextTool: ToolDefinition<
+  GetCaseValueContextInputSchema,
+  CaseValueContextResult
+> = {
   name: 'getCaseValueContext',
   label: 'Building graph-backed value context',
-  inputSchema,
+  get inputSchema(): GetCaseValueContextInputSchema {
+    return getInputSchema();
+  },
   execute,
   summarize: (result) =>
     result.status === 'ok'

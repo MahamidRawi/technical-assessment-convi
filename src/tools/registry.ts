@@ -7,6 +7,7 @@ import { TOOL_ENTRIES, forEachTool } from './toolCatalog';
 import { createToolExecute } from './toolRunner';
 import type { ToolDefinition } from './types';
 import { ReadinessArtifactComposer } from './readiness/artifactComposer';
+import { loadEnumVocabulary } from './_shared/dynamicEnums';
 
 export { TOOL_ENTRIES };
 
@@ -18,6 +19,11 @@ export async function buildAgentTools(
 ): Promise<ToolSet> {
   let stepCounter = 0;
   const readinessComposer = onReadinessDecision ? new ReadinessArtifactComposer() : undefined;
+  // Populate the closed-enum cache from the live graph BEFORE any tool input schema is
+  // constructed. Tool definitions read their schema via lazy getters; this ensures the
+  // first read sees the populated cache and emits z.enum(...) to the LLM rather than the
+  // cold-start z.string() fallback.
+  await loadEnumVocabulary();
   const descriptions = await resolveToolDescriptions(TOOL_ENTRIES.map((entry) => entry.name));
   const tools: ToolSet = {};
 
