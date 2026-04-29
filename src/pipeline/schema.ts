@@ -75,10 +75,38 @@ const FULLTEXT_INDEXES: Array<[string, string]> = [
   ],
 ];
 
+async function isAlreadyInitialized(session: ReturnType<typeof createSession>): Promise<boolean> {
+  // `npm run setup` invokes `npm run schema` *and* the in-process ingest also
+  // calls `ensureGraphSchema` so standalone `npm run ingest` works on a fresh
+  // graph. To avoid running ~55 idempotent CREATE...IF NOT EXISTS round-trips
+  // on every `setup`, fast-path out if the graph already has at least the
+  // expected number of constraints + indexes (full-text indexes show up in
+  // SHOW INDEXES with type='FULLTEXT', so we count them separately).
+  const constraints = await session.run('SHOW CONSTRAINTS YIELD name RETURN count(*) AS n');
+  const constraintCount = Number(constraints.records[0]?.get('n')?.toNumber?.() ?? constraints.records[0]?.get('n') ?? 0);
+  if (constraintCount < CONSTRAINTS.length) return false;
+
+  const indexes = await session.run(
+    "SHOW INDEXES YIELD name, type WHERE type <> 'FULLTEXT' AND type <> 'LOOKUP' RETURN count(*) AS n"
+  );
+  const indexCount = Number(indexes.records[0]?.get('n')?.toNumber?.() ?? indexes.records[0]?.get('n') ?? 0);
+  if (indexCount < INDEXES.length) return false;
+
+  const fulltext = await session.run("SHOW INDEXES YIELD type WHERE type = 'FULLTEXT' RETURN count(*) AS n");
+  const fulltextCount = Number(fulltext.records[0]?.get('n')?.toNumber?.() ?? fulltext.records[0]?.get('n') ?? 0);
+  if (fulltextCount < FULLTEXT_INDEXES.length) return false;
+
+  return true;
+}
+
 export async function ensureGraphSchema(): Promise<void> {
   await connectNeo4j();
   const session = createSession();
   try {
+    if (await isAlreadyInitialized(session)) {
+      logger.log('Graph schema already initialized — skipping constraint/index creation');
+      return;
+    }
     logger.log('Creating constraints...');
     for (const [label, cypher] of CONSTRAINTS) {
       await session.run(cypher);

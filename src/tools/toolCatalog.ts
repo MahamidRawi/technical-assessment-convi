@@ -31,7 +31,7 @@ export type AddTool = <TSchema extends z.ZodTypeAny, TResult>(
   def: ToolDefinition<TSchema, TResult>
 ) => void;
 
-export const TOOL_ENTRIES = [
+const DEFAULT_TOOL_ENTRIES = [
   { name: findCaseTool.name },
   ...(process.env.AGENT_ADVANCED_TOOLS === 'true'
     ? [{ name: getCaseGraphContextTool.name }]
@@ -61,6 +61,8 @@ export const TOOL_ENTRIES = [
   { name: compareCaseToReadinessPatternTool.name },
   { name: estimateTimeToStageTool.name },
 ] as const;
+
+export const TOOL_ENTRIES = DEFAULT_TOOL_ENTRIES;
 
 export function forEachTool(addTool: AddTool): void {
   addTool(findCaseTool);

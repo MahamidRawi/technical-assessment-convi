@@ -28,3 +28,8 @@ test('registry exposes OCR fact and value reasoning tools', () => {
   assert.ok(names.includes('getCaseValueContext'));
   assert.ok(names.includes('searchCasesByMedicalEvidence'));
 });
+
+test('registry no longer exposes the dynamic generated-Cypher tool', () => {
+  const names = TOOL_ENTRIES.map((entry) => entry.name);
+  assert.ok(!names.includes('queryGraphWithGeneratedCypher'));
+});

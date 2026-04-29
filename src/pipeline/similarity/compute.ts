@@ -1,5 +1,5 @@
 import { cosineSimilarity } from 'ai';
-import { SIMILARITY_MIN_SCORE } from '@/constants/readiness';
+import { SIMILARITY_MIN_SCORE, SIMILARITY_TOP_K_PER_CASE } from '@/constants/readiness';
 import type { CaseSignals, SimilarityMethod, SimilarityWriteRow } from './types';
 
 const SEMANTIC_REASON_THRESHOLD = 0.7;
@@ -73,7 +73,7 @@ export function computePairs(
   similarityMethod: SimilarityMethod
 ): SimilarityWriteRow[] {
   const docFreq = buildDocFrequency(cases);
-  const rows: SimilarityWriteRow[] = [];
+  const candidatePairs: SimilarityWriteRow[] = [];
   for (let i = 0; i < cases.length; i++) {
     const left = cases[i];
     if (!left) continue;
@@ -90,7 +90,7 @@ export function computePairs(
       if (semanticScore !== null && semanticScore >= SEMANTIC_REASON_THRESHOLD) {
         reasons.push('Semantic summary match');
       }
-      rows.push({
+      candidatePairs.push({
         leftId: left.caseId,
         rightId: right.caseId,
         score: combinedScore,
@@ -103,5 +103,31 @@ export function computePairs(
       });
     }
   }
-  return rows;
+  return pruneToTopKPerCase(candidatePairs, SIMILARITY_TOP_K_PER_CASE);
+}
+
+// Small portfolios + a permissive threshold produce a saturated graph (every
+// pair admitted), which means SIMILAR_TO carries no retrieval signal. We keep
+// each Case's K strongest neighbors and drop the rest. A pair survives if it
+// ranks in *either* endpoint's top-K, so a hub case can't crowd out a weaker
+// case's best match.
+function pruneToTopKPerCase(rows: SimilarityWriteRow[], k: number): SimilarityWriteRow[] {
+  if (k <= 0 || rows.length === 0) return rows;
+  const byCase = new Map<string, SimilarityWriteRow[]>();
+  for (const row of rows) {
+    const left = byCase.get(row.leftId) ?? [];
+    left.push(row);
+    byCase.set(row.leftId, left);
+    const right = byCase.get(row.rightId) ?? [];
+    right.push(row);
+    byCase.set(row.rightId, right);
+  }
+  const survivors = new Set<SimilarityWriteRow>();
+  for (const list of byCase.values()) {
+    list.sort((a, b) => b.combinedScore - a.combinedScore);
+    for (let i = 0; i < Math.min(k, list.length); i++) {
+      survivors.add(list[i]!);
+    }
+  }
+  return Array.from(survivors);
 }

@@ -12,6 +12,14 @@ export const TOP_SIGNAL_LIMIT = 12;
 export const TOP_SIMILAR_CASE_LIMIT = 8;
 export const SIMILARITY_MIN_SCORE = 0.18;
 
+// Cap SIMILAR_TO neighbors per Case after threshold filtering. Without this,
+// the small-portfolio threshold (0.18) admits every observed pair (min observed
+// signal+semantic blend is ~0.29 on 70 cases), so the graph saturates: every
+// pair is "similar," which makes the edge carry zero retrieval signal. We
+// keep an asymmetric top-K — a pair survives if it ranks in either side's
+// top K — so well-connected hubs don't crowd out weaker cases' best peers.
+export const SIMILARITY_TOP_K_PER_CASE = 8;
+
 // Minimum activity-log-sourced peers required before we report a timing median
 // or quartiles. Below this, snapshot-only StageEvents (backfilled from
 // Case.legalStageEnteredAt) dominate and the aggregate measures "case age at

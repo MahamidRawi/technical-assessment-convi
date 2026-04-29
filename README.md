@@ -92,7 +92,7 @@ The agent uses `src/llm/provider.ts` instead of binding to a single SDK. `LLM_PR
 
 ## Agent boundary
 
-The agent is **prompt-guided typed tool selection plus graph-grounded tool execution**. It is not a free-form Cypher generator, and it does not dynamically invent graph queries at runtime. The model chooses from the registered typed tools; the system prompt and tool descriptions explain when to use readiness, OCR evidence, comparable-case, medical-evidence, and valuation tools. There is no regex-based turn policy that forces a scripted tool path.
+The agent is **prompt-guided typed tool selection plus graph-grounded tool execution**. The model chooses from the registered typed tools; the system prompt and tool descriptions explain when to use readiness, OCR evidence, comparable-case, medical-evidence, valuation, contacts, experts, and portfolio-aggregate tools. There is no regex-based turn policy that forces a scripted tool path, and there is no dynamic-Cypher escape hatch — every graph read is a typed tool whose Cypher lives in version control.
 
 ## Scripts
 

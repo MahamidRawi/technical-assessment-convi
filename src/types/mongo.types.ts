@@ -145,8 +145,17 @@ export const MongoFileSchema = z.object({
   versions: z
     .array(
       z.object({
+        // Older shape kept some files; current archived-version shape uses
+        // gcsPath/archivedAt/archivedBy. Both are accepted via .passthrough(),
+        // but we type the fields the writer actually reads.
         fileId: IdSchema.optional(),
         uploadedAt: DateLikeSchema.nullish(),
+        gcsPath: z.string().nullish(),
+        publicUrl: z.string().nullish(),
+        pageCount: z.number().nullish(),
+        fileSize: z.number().nullish(),
+        archivedBy: z.string().nullish(),
+        archivedAt: DateLikeSchema.nullish(),
       }).passthrough()
     )
     .optional(),

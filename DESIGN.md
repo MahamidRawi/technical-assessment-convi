@@ -410,15 +410,23 @@ once an eval set with stable ground truth exists.
 
 ## 12. The agent
 
-**Prompt-guided tools, not dynamic Cypher.** The system registers 19 atomic tools by default
-(plus `getCaseGraphContext` when `AGENT_ADVANCED_TOOLS=true`): resolve
-case, fetch overview (with experts), search, list portfolio contacts /
-experts, derive readiness pattern, compare to pattern, estimate time to
-stage, rank by transition time, benchmark, etc. The agent does not generate
-arbitrary Cypher. There is no regex turn policy that forces a scripted path;
-the model chooses from the registered typed tools, guided by the system prompt
-and tool descriptions for readiness, OCR evidence, comparable cases, medical
-evidence, and valuation questions.
+**Prompt-guided typed tools, no dynamic-Cypher escape hatch.** The system
+registers a fixed catalog of atomic typed tools (plus `getCaseGraphContext`
+when `AGENT_ADVANCED_TOOLS=true`): resolve case, fetch overview (with experts),
+search, list portfolio contacts / experts, derive readiness pattern, compare
+to pattern, estimate time to stage, rank by transition time, benchmark, and
+the OCR/fact/value tools. There is no regex turn policy that forces a scripted
+path; the model chooses from the registered typed tools, guided by the system
+prompt and tool descriptions for readiness, OCR evidence, comparable cases,
+medical evidence, and valuation.
+
+Every graph read goes through a typed tool whose Cypher lives in version
+control. We deliberately removed the earlier `queryGraphWithGeneratedCypher`
+fallback: a model-generated Cypher path made the safety surface depend on a
+brittle string-validation layer, and any question worth answering twice should
+become a typed tool with stable parameters and a regression test. If the
+catalog is too narrow for a real question, the answer is a new typed tool, not
+a dynamic query.
 
 **Composition by observation, not orchestration.** The
 `ReadinessArtifactComposer` watches tool results and assembles a

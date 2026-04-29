@@ -23,9 +23,30 @@ interface DocumentRow {
   isModified: boolean;
 }
 
+interface ArchivedParentRow {
+  sourceId: string;
+  caseId: string;
+  fileName: string;
+  pageCount: number | null;
+  fileSize: number | null;
+  archivedAt: string | null;
+  archivedBy: string | null;
+  gcsPath: string;
+}
+
 function docTypeName(value: string | null | undefined): string {
   const name = value?.trim();
   return name ? name : 'unclassified';
+}
+
+function archivedSourceIdFor(gcsPath: string): string {
+  // Prefix avoids any chance of colliding with live Mongo file _ids.
+  return `archived:${gcsPath}`;
+}
+
+function fileNameFromGcsPath(gcsPath: string): string {
+  const idx = gcsPath.lastIndexOf('/');
+  return idx >= 0 ? gcsPath.slice(idx + 1) : gcsPath;
 }
 
 export async function writeDocuments(
@@ -43,8 +64,10 @@ export async function writeDocuments(
   const ofCategoryRows: Array<{ sourceId: string; categoryName: string }> = [];
   const ofTypeRows: Array<{ sourceId: string; typeName: string }> = [];
   const derivedRows: Array<{ sourceId: string; parentId: string }> = [];
+  const archivedParentRows: ArchivedParentRow[] = [];
   const seenCategories = new Set<string>();
   const seenTypes = new Set<string>();
+  const seenArchivedIds = new Set<string>();
 
   for (const file of mongoFiles) {
     const resolvedCaseId = resolveFileCaseId(file, caseIds);
@@ -60,6 +83,14 @@ export async function writeDocuments(
       seenTypes.add(typeName);
       typeRows.push({ name: typeName });
     }
+    // Detect archived prior versions. Two distinct provenance paths exist in
+    // source data:
+    //   1. file.sourceFileId — points to another live Mongo file _id (cross-doc derivation)
+    //   2. file.versions[].gcsPath — archived prior content for the same logical doc
+    // Both surface as DERIVED_FROM edges so retrieval can answer "what was this
+    // document before?" via a single traversal pattern.
+    const hasArchivedVersions =
+      Array.isArray(file.versions) && file.versions.some((v) => typeof v?.gcsPath === 'string' && v.gcsPath.length > 0);
     documentRows.push({
       sourceId,
       caseId: resolvedCaseId,
@@ -73,13 +104,34 @@ export async function writeDocuments(
       hasOcr: file.processedData?.has_ocr ?? false,
       pageCount: file.pageCount ?? null,
       sourceFileId: file.sourceFileId ? extractSourceId(file.sourceFileId) : null,
-      isModified: file.isModified === true,
+      isModified: file.isModified === true || hasArchivedVersions,
     });
     hasDocumentRows.push({ caseId: resolvedCaseId, sourceId });
     ofCategoryRows.push({ sourceId, categoryName });
     ofTypeRows.push({ sourceId, typeName });
     if (file.sourceFileId) {
       derivedRows.push({ sourceId, parentId: extractSourceId(file.sourceFileId) });
+    }
+    if (Array.isArray(file.versions)) {
+      for (const v of file.versions) {
+        const gcsPath = typeof v?.gcsPath === 'string' ? v.gcsPath : null;
+        if (!gcsPath) continue;
+        const archivedSourceId = archivedSourceIdFor(gcsPath);
+        if (!seenArchivedIds.has(archivedSourceId)) {
+          seenArchivedIds.add(archivedSourceId);
+          archivedParentRows.push({
+            sourceId: archivedSourceId,
+            caseId: resolvedCaseId,
+            fileName: fileNameFromGcsPath(gcsPath),
+            pageCount: typeof v.pageCount === 'number' ? v.pageCount : null,
+            fileSize: typeof v.fileSize === 'number' ? v.fileSize : null,
+            archivedAt: extractISODate(v.archivedAt ?? null),
+            archivedBy: typeof v.archivedBy === 'string' ? v.archivedBy : null,
+            gcsPath,
+          });
+        }
+        derivedRows.push({ sourceId, parentId: archivedSourceId });
+      }
     }
   }
 
@@ -120,11 +172,39 @@ export async function writeDocuments(
      MERGE (d)-[:OF_TYPE]->(dt)`,
     { rows: ofTypeRows }
   );
+  // Archived prior-version Documents. Created with archived=true so retrieval
+  // queries that want only live docs can filter `WHERE NOT coalesce(d.archived, false)`.
+  if (archivedParentRows.length > 0) {
+    await session.run(
+      `UNWIND $rows AS row
+       MERGE (d:Document {sourceId: row.sourceId})
+       SET d.caseId = row.caseId,
+           d.fileName = row.fileName,
+           d.pageCount = row.pageCount,
+           d.fileSize = row.fileSize,
+           d.archivedAt = row.archivedAt,
+           d.archivedBy = row.archivedBy,
+           d.gcsPath = row.gcsPath,
+           d.archived = true,
+           d.processingStatus = coalesce(d.processingStatus, 'archived')`,
+      { rows: archivedParentRows }
+    );
+    // Attach archived parents to their case so case-scoped traversals find them.
+    await session.run(
+      `UNWIND $rows AS row
+       MATCH (c:Case {caseId: row.caseId}), (d:Document {sourceId: row.sourceId})
+       MERGE (c)-[:HAS_DOCUMENT]->(d)`,
+      { rows: archivedParentRows }
+    );
+  }
   await session.run(
     `UNWIND $rows AS row
      MATCH (child:Document {sourceId: row.sourceId}), (parent:Document {sourceId: row.parentId})
      MERGE (child)-[:DERIVED_FROM]->(parent)`,
     { rows: derivedRows }
   );
-  logger.log(`Wrote ${documentRows.length} Documents with ${derivedRows.length} provenance edges`);
+  logger.log(
+    `Wrote ${documentRows.length} Documents with ${derivedRows.length} provenance edges` +
+      ` (${archivedParentRows.length} archived prior versions)`
+  );
 }
