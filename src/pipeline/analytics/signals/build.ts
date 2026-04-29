@@ -75,5 +75,6 @@ export function buildSignalWriteSet(observations: SignalObservation[]): SignalWr
     documentEmitRows: emitRows(observations, 'Document'),
     communicationEmitRows: emitRows(observations, 'Communication'),
     activityEmitRows: emitRows(observations, 'ActivityEvent'),
+    evidenceFactEmitRows: emitRows(observations, 'EvidenceFact'),
   };
 }

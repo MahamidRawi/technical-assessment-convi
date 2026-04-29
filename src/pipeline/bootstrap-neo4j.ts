@@ -49,6 +49,10 @@ async function main(): Promise<void> {
   run('npm run -s schema');
   if (process.env.BOOTSTRAP_INGEST === 'true') {
     run('npm run -s ingest');
+    if (process.env.BOOTSTRAP_SKIP_VERIFY !== 'true') {
+      logger.log('running verify:graph to confirm node/relationship counts and OCR coverage');
+      run('npm run -s verify:graph');
+    }
   } else {
     logger.log('skipping ingest (set BOOTSTRAP_INGEST=true to include data load)');
   }

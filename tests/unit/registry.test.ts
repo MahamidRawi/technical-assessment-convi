@@ -19,3 +19,12 @@ test('registry exposes portfolio-level contact and expert listing tools', () => 
   assert.ok(names.includes('listPortfolioContacts'));
   assert.ok(names.includes('listPortfolioExperts'));
 });
+
+test('registry exposes OCR fact and value reasoning tools', () => {
+  const names = TOOL_ENTRIES.map((entry) => entry.name);
+  assert.ok(names.includes('searchDocumentEvidence'));
+  assert.ok(names.includes('getCaseDocumentFacts'));
+  assert.ok(names.includes('findComparableCasesByFacts'));
+  assert.ok(names.includes('getCaseValueContext'));
+  assert.ok(names.includes('searchCasesByMedicalEvidence'));
+});

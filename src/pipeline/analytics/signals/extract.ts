@@ -40,6 +40,14 @@ const caseSignalRowSchema = z.object({
   contactRoles: neo4jStringArray,
 });
 
+const evidenceFactSignalRowSchema = z.object({
+  caseId: neo4jString,
+  factId: neo4jString,
+  observedAt: neo4jNullableString,
+  kind: neo4jString,
+  subtype: neo4jNullableString,
+});
+
 function documentObservations(
   rows: Array<z.output<typeof documentSignalRowSchema>>
 ): SignalObservation[] {
@@ -145,6 +153,36 @@ function caseObservations(rows: Array<z.output<typeof caseSignalRowSchema>>): Si
   });
 }
 
+function evidenceFactObservations(
+  rows: Array<z.output<typeof evidenceFactSignalRowSchema>>
+): SignalObservation[] {
+  return rows.flatMap((row): SignalObservation[] => {
+    const observedAt = toIso(row.observedAt);
+    const base = {
+      caseId: row.caseId,
+      observedAt,
+      sourceKind: 'evidenceFact',
+      emitLabel: 'EvidenceFact' as const,
+      emitSourceId: row.factId,
+    };
+    const observations: SignalObservation[] = [{
+      ...base,
+      key: `evidenceFactKind:${row.kind}`,
+      label: `Evidence fact: ${row.kind}`,
+      kind: 'evidenceFactKind',
+    }];
+    if (row.subtype) {
+      observations.push({
+        ...base,
+        key: `evidenceFactSubtype:${row.kind}:${row.subtype}`,
+        label: `Evidence fact: ${row.kind} / ${row.subtype}`,
+        kind: 'evidenceFactSubtype',
+      });
+    }
+    return observations;
+  });
+}
+
 export async function collectSignalObservations(session: CypherReadRunner): Promise<SignalObservation[]> {
   const docRows = await session.run(`
       MATCH (c:Case)-[:HAS_DOCUMENT]->(d:Document)
@@ -182,11 +220,18 @@ export async function collectSignalObservations(session: CypherReadRunner): Prom
              collect(DISTINCT ins.normalized) AS insurers,
              collect(DISTINCT hc.role) AS contactRoles
     `);
+  const evidenceFactRows = await session.run(`
+      MATCH (c:Case)-[:HAS_EVIDENCE_FACT]->(fact:EvidenceFact)
+      RETURN c.caseId AS caseId, fact.factId AS factId,
+             toString(coalesce(fact.observedDate, fact.fromDate, fact.toDate)) AS observedAt,
+             fact.kind AS kind, fact.subtype AS subtype
+    `);
 
   return [
     ...documentObservations(parseNeo4jRecords(docRows.records, documentSignalRowSchema, 'document signals')),
     ...communicationObservations(parseNeo4jRecords(commRows.records, communicationSignalRowSchema, 'communication signals')),
     ...activityObservations(parseNeo4jRecords(activityRows.records, activitySignalRowSchema, 'activity signals')),
     ...caseObservations(parseNeo4jRecords(caseRows.records, caseSignalRowSchema, 'case signals')),
+    ...evidenceFactObservations(parseNeo4jRecords(evidenceFactRows.records, evidenceFactSignalRowSchema, 'evidence fact signals')),
   ];
 }

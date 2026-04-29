@@ -9,9 +9,25 @@ import {
   neo4jStringArray,
 } from './_shared/neo4jMap';
 import type { ToolDefinition } from './types';
-import { inputSchema, type SearchCasesInput, type CaseSearchHit } from './searchCases/schema';
+import {
+  buildInputSchema,
+  type SearchCasesInput,
+  type SearchCasesInputSchema,
+  type CaseSearchHit,
+} from './searchCases/schema';
 import { buildSearchCypher } from './searchCases/cypher';
 import { z } from 'zod';
+
+/**
+ * Lazy schema accessor: closed-enum fields (caseType, legalStage, phase, status) source
+ * their valid values from the live graph at boot. Building the schema on first read lets
+ * `loadEnumVocabulary()` run before construction. See `_shared/dynamicEnums.ts`.
+ */
+let _inputSchema: SearchCasesInputSchema | null = null;
+function getInputSchema(): SearchCasesInputSchema {
+  if (!_inputSchema) _inputSchema = buildInputSchema();
+  return _inputSchema;
+}
 
 export type { CaseSearchHit };
 
@@ -91,10 +107,12 @@ async function execute(input: SearchCasesInput): Promise<SearchCasesResult> {
   };
 }
 
-export const searchCasesTool: ToolDefinition<typeof inputSchema, SearchCasesResult> = {
+export const searchCasesTool: ToolDefinition<SearchCasesInputSchema, SearchCasesResult> = {
   name: 'searchCases',
   label: 'Searching cases by filters',
-  inputSchema,
+  get inputSchema(): SearchCasesInputSchema {
+    return getInputSchema();
+  },
   execute,
   summarize: (r) => {
     if (r.hits.length === 0) return 'No cases match filters';

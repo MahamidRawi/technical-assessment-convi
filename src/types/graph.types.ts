@@ -21,6 +21,11 @@ export interface CaseNode {
   isOverdue: boolean | null;
   mainInjury: string | null;
   aiGeneratedSummary: string | null;
+  clientAge: number | null;
+  clientBirthDate: string | null;
+  clientGender: string | null;
+  workAccidentFlag: boolean | null;
+  triageSummary: string | null;
 }
 
 export interface ContactNode {
@@ -154,4 +159,62 @@ export interface CaseSignalEdge {
   lastObservedAt: string | null;
   count: number;
   sourceKinds: string[];
+}
+
+export interface DocumentChunkNode {
+  chunkId: string;
+  documentId: string;
+  caseId: string;
+  chunkNumber: number;
+  pageRange: string | null;
+  text: string;
+  textPreview: string;
+  summary: string | null;
+  gcsUri: string | null;
+  charCount: number;
+  source: string;
+  chunkHash?: string;
+}
+
+export interface EvidenceFactNode {
+  factId: string;
+  caseId: string;
+  documentId: string;
+  chunkId: string;
+  kind: string;
+  subtype: string | null;
+  label: string;
+  value: string | null;
+  numericValue: number | null;
+  unit: string | null;
+  fromDate: string | null;
+  toDate: string | null;
+  observedDate: string | null;
+  confidence: number;
+  quote: string;
+  metadata: string | null;
+  source?: 'regex' | 'llm';
+  extractorVersion?: string;
+  chunkHash?: string;
+}
+
+export interface CaseValuationNode {
+  valuationId: string;
+  caseId: string;
+  compensationMin: number | null;
+  compensationMax: number | null;
+  feeMin: number | null;
+  feeMax: number | null;
+  totalEstimate: number | null;
+  basis: string | null;
+  status: string | null;
+  analysisDate: string | null;
+}
+
+export interface DamageComponentNode {
+  componentId: string;
+  valuationId: string;
+  caseId: string;
+  kind: string;
+  amount: number;
 }

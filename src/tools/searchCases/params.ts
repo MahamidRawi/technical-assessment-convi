@@ -1,6 +1,7 @@
 import type { SearchCasesInput } from './schema';
 import { normalizeTerm, normalizeText } from '@/pipeline/ingest/normalize';
 import { SOL_WINDOW_MONTHS } from '@/policy/legalTiming';
+import { coerceVocabOrNull } from '@/tools/_shared/dynamicEnums';
 
 export type SearchCasesParamValue = string | number | boolean | null;
 
@@ -72,10 +73,10 @@ function fractionMaxOrNull(v: number | undefined): number | null {
 
 export function buildSearchParams(input: SearchCasesInput): SearchCasesParams {
   return {
-    caseType: emptyToNull(input.caseType),
-    legalStage: emptyToNull(input.legalStage),
-    phase: emptyToNull(input.phase),
-    status: emptyToNull(input.status),
+    caseType: coerceVocabOrNull('caseType', emptyToNull(input.caseType)),
+    legalStage: coerceVocabOrNull('legalStage', emptyToNull(input.legalStage)),
+    phase: coerceVocabOrNull('phase', emptyToNull(input.phase)),
+    status: coerceVocabOrNull('status', emptyToNull(input.status)),
     isSigned: trueOrNull(input.isSigned),
     isOverdue: trueOrNull(input.isOverdue),
     mainInjury: normTextOrNull(input.mainInjury),

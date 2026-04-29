@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSearchCypher } from '@/tools/searchCases/cypher';
-import { inputSchema } from '@/tools/searchCases/schema';
+import { buildInputSchema } from '@/tools/searchCases/schema';
+
+// Built once per process; in unit tests the enum cache is cold (no Neo4j), so the
+// closed-enum fields fall back to z.string() — see dynamicEnums.ts cold-start guard.
+const inputSchema = buildInputSchema();
 
 test('searchCases coerces neutral default values to null to defend against LLM default-stuffing', () => {
   const allDefaults = buildSearchCypher(

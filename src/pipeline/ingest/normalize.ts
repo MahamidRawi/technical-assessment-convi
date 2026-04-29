@@ -57,6 +57,12 @@ export function normalizeCaseNode(
   mongoCase: MongoCase,
   projection: FinancialProjection | null
 ): CaseNode {
+  const triageSummary =
+    typeof mongoCase.triageSummary === 'string'
+      ? mongoCase.triageSummary
+      : mongoCase.triageSummary
+        ? JSON.stringify(mongoCase.triageSummary)
+        : null;
   return {
     sourceId: extractSourceId(mongoCase._id),
     caseId: mongoCase.caseId,
@@ -80,6 +86,16 @@ export function normalizeCaseNode(
     isOverdue: projection?.projection?.timing?.isOverdue ?? null,
     mainInjury: projection?.projection?.caseData?.mainInjury ?? null,
     aiGeneratedSummary: mongoCase.aiGeneratedSummary ?? null,
+    clientAge: mongoCase.clientInfo?.age ?? null,
+    clientBirthDate:
+      extractISODate(mongoCase.clientInfo?.birthDate) ??
+      extractISODate(mongoCase.clientInfo?.dateOfBirth),
+    clientGender: mongoCase.clientInfo?.gender ?? null,
+    workAccidentFlag:
+      mongoCase.workAccidentFlag ??
+      projection?.projection?.classification?.classifiedWorkAccidentFlag ??
+      null,
+    triageSummary,
   };
 }
 

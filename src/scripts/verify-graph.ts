@@ -17,6 +17,10 @@ const NODE_LABELS = [
   'DocumentType',
   'ReadinessSignal',
   'ReadinessCohort',
+  'DocumentChunk',
+  'EvidenceFact',
+  'CaseValuation',
+  'DamageComponent',
 ] as const;
 
 const RELATIONSHIPS = [
@@ -46,6 +50,11 @@ const RELATIONSHIPS = [
   'HAS_MEMBER',
   'TARGET_STAGE',
   'SIMILAR_TO',
+  'HAS_CHUNK',
+  'SUPPORTS_FACT',
+  'HAS_EVIDENCE_FACT',
+  'HAS_VALUATION',
+  'HAS_COMPONENT',
 ] as const;
 
 function num(value: unknown): number {
@@ -157,6 +166,92 @@ async function main(): Promise<void> {
       };
       console.log(
         `  [${r.get('stage')}/${r.get('scope')}] ${r.get('signal')}  support=${fmt(support)} lift=${fmt(lift)} lead=${lead == null ? 'n/a' : `${num(lead)}d`}`
+      );
+    }
+
+    console.log('\n=== OCR facts by kind ===');
+    const factRows = await s.run(`
+      MATCH (fact:EvidenceFact)
+      RETURN fact.kind AS kind, count(*) AS n
+      ORDER BY n DESC, kind ASC
+    `);
+    if (factRows.records.length === 0) {
+      console.log('  (no OCR-derived facts)');
+    }
+    for (const r of factRows.records) {
+      console.log(`  ${pad(String(r.get('kind')), 26)} ${num(r.get('n'))}`);
+    }
+
+    console.log('\n=== OCR facts by source ===');
+    const sourceFactRows = await s.run(`
+      MATCH (ef:EvidenceFact)
+      RETURN coalesce(ef.source, '(unset)') AS source, count(*) AS n
+      ORDER BY n DESC
+    `);
+    if (sourceFactRows.records.length === 0) {
+      console.log('  (no OCR-derived facts)');
+    }
+    for (const r of sourceFactRows.records) {
+      console.log(`  ${pad(String(r.get('source')), 26)} ${num(r.get('n'))}`);
+    }
+
+    console.log('\n=== OCR facts by extractor ===');
+    const extractorRows = await s.run(`
+      MATCH (ef:EvidenceFact)
+      RETURN coalesce(ef.extractorVersion, '(unset)') AS extractorVersion, count(*) AS n
+      ORDER BY n DESC
+    `);
+    if (extractorRows.records.length === 0) {
+      console.log('  (no OCR-derived facts)');
+    }
+    for (const r of extractorRows.records) {
+      console.log(`  ${pad(String(r.get('extractorVersion')), 26)} ${num(r.get('n'))}`);
+    }
+
+    console.log('\n=== Chunk hash coverage ===');
+    const hashCoverageRows = await s.run(`
+      MATCH (dc:DocumentChunk)
+      RETURN count(dc) AS total, count(dc.chunkHash) AS withHash
+    `);
+    const coverage = hashCoverageRows.records[0];
+    if (coverage) {
+      console.log(`  total=${num(coverage.get('total'))}  withHash=${num(coverage.get('withHash'))}`);
+    } else {
+      console.log('  (no DocumentChunk nodes)');
+    }
+
+    console.log('\n=== OCR / valuation index status ===');
+    const indexRows = await s.run(`
+      SHOW INDEXES
+      YIELD name, type, labelsOrTypes, properties, state
+      WHERE name IN ['documentChunkFulltext', 'evidenceFactFulltext']
+         OR any(label IN labelsOrTypes WHERE label IN ['DocumentChunk', 'EvidenceFact', 'CaseValuation'])
+      RETURN name, type, labelsOrTypes, properties, state
+      ORDER BY name
+    `);
+    for (const r of indexRows.records) {
+      console.log(
+        `  ${pad(String(r.get('name')), 28)} type=${r.get('type')} labels=${JSON.stringify(r.get('labelsOrTypes'))} props=${JSON.stringify(r.get('properties'))} state=${r.get('state')}`
+      );
+    }
+
+    console.log('\n=== Sample OCR-backed evidence paths ===');
+    const evidenceRows = await s.run(`
+      MATCH (c:Case)-[:HAS_DOCUMENT]->(doc:Document)-[:HAS_CHUNK]->(chunk:DocumentChunk)-[:SUPPORTS_FACT]->(fact:EvidenceFact)
+      RETURN c.caseId AS caseId,
+             doc.fileName AS fileName,
+             chunk.chunkId AS chunkId,
+             fact.kind AS kind,
+             fact.label AS label
+      ORDER BY fact.confidence DESC
+      LIMIT 5
+    `);
+    if (evidenceRows.records.length === 0) {
+      console.log('  (no document chunk -> fact paths)');
+    }
+    for (const r of evidenceRows.records) {
+      console.log(
+        `  ${r.get('caseId')} | ${r.get('kind')} | ${r.get('label')} | ${r.get('fileName')} | ${r.get('chunkId')}`
       );
     }
 

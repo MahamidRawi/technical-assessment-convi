@@ -39,11 +39,9 @@ export async function streamCaseReasonerResponse(
         .trim() ?? '';
     parentSpan.setAttribute('langfuse.observation.input', userPromptText);
 
-    const instructions = await resolveCaseReasonerSystemPrompt();
-
     const agent = new ToolLoopAgent<never, ToolSet, never>({
       model: getLanguageModel(),
-      instructions,
+      instructions: await resolveCaseReasonerSystemPrompt(),
       tools,
       stopWhen: stepCountIs(12),
       experimental_telemetry: {

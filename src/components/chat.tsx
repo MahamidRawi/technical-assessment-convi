@@ -8,7 +8,10 @@ import { AgentStatusIndicator } from '@/components/agent-status-indicator';
 import type { AgentStatusEvent, StreamUIMessage } from '@/types/stream.types';
 import { isAgentStatusEvent } from '@/types/stream.guards';
 import {
+  clearButtonDisabledStyle,
+  clearButtonStyle,
   containerStyle,
+  formToolbarStyle,
   formStyle,
   iconButtonDisabledStyle,
   iconButtonStyle,
@@ -27,9 +30,12 @@ const chatTransport = new DefaultChatTransport<StreamUIMessage>({
 
 export function Chat(): React.JSX.Element {
   const [agentStatus, setAgentStatus] = useState<AgentStatusEvent | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isClearingHistory, setIsClearingHistory] = useState(false);
   const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { messages, sendMessage, status, stop, error } =
+  const { messages, setMessages, sendMessage, status, stop, error, clearError } =
     useChat<StreamUIMessage>({
       transport: chatTransport,
       onData: (dataPart) => {
@@ -54,10 +60,43 @@ export function Chat(): React.JSX.Element {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isLoading = status === 'submitted' || status === 'streaming';
+  const isInputDisabled = isLoading || historyLoading;
 
   useEffect(() => {
     if (status === 'ready') setAgentStatus(null);
   }, [status]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadHistory(): Promise<void> {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Failed to load conversation history');
+        const data = (await response.json()) as { messages?: StreamUIMessage[] };
+        if (Array.isArray(data.messages)) {
+          setMessages((current) =>
+            current.length === 0 ? data.messages ?? [] : current
+          );
+        }
+      } catch (loadError: unknown) {
+        if (controller.signal.aborted) return;
+        setHistoryError(
+          loadError instanceof Error
+            ? loadError.message
+            : 'Failed to load conversation history'
+        );
+      } finally {
+        if (!controller.signal.aborted) setHistoryLoading(false);
+      }
+    }
+
+    void loadHistory();
+    return () => controller.abort();
+  }, [setMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,6 +109,29 @@ export function Chat(): React.JSX.Element {
 
     sendMessage({ text: trimmed });
     setInput('');
+  }
+
+  async function handleClearHistory(): Promise<void> {
+    if (isLoading || isClearingHistory) return;
+    setIsClearingHistory(true);
+    setHistoryError(null);
+    clearError();
+
+    try {
+      const response = await fetch('/api/chat', { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to clear conversation history');
+      setMessages([]);
+      setAgentStatus(null);
+    } catch (clearHistoryError: unknown) {
+      setHistoryError(
+        clearHistoryError instanceof Error
+          ? clearHistoryError.message
+          : 'Failed to clear conversation history'
+      );
+    } finally {
+      setIsClearingHistory(false);
+      setHistoryLoading(false);
+    }
   }
 
   return (
@@ -105,11 +167,33 @@ export function Chat(): React.JSX.Element {
             Error: {error.message}. Please try again.
           </div>
         )}
+        {historyError && (
+          <div style={{ padding: '8px 0', color: '#cc0000', fontSize: '14px' }}>
+            {historyError}
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSubmit} style={formStyle}>
         <AgentStatusIndicator status={agentStatus} />
+        <div style={formToolbarStyle}>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={() => void handleClearHistory()}
+              disabled={isLoading || isClearingHistory}
+              style={
+                isLoading || isClearingHistory
+                  ? clearButtonDisabledStyle
+                  : clearButtonStyle
+              }
+              title="Clear conversation history"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <div style={inputWrapperStyle}>
           <input
             type="text"
@@ -118,7 +202,7 @@ export function Chat(): React.JSX.Element {
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder="Ask about a case..."
-            disabled={isLoading}
+            disabled={isInputDisabled}
             style={focused ? inputFocusStyle : inputStyle}
           />
           {isLoading ? (
@@ -128,8 +212,12 @@ export function Chat(): React.JSX.Element {
           ) : (
             <button
               type="submit"
-              disabled={status !== 'ready' || !input.trim()}
-              style={status !== 'ready' || !input.trim() ? iconButtonDisabledStyle : iconButtonStyle}
+              disabled={status !== 'ready' || historyLoading || !input.trim()}
+              style={
+                status !== 'ready' || historyLoading || !input.trim()
+                  ? iconButtonDisabledStyle
+                  : iconButtonStyle
+              }
               title="Send"
             >
               ↑

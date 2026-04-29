@@ -20,6 +20,10 @@ const CONSTRAINTS: Array<[string, string]> = [
   ['StageEvent.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (se:StageEvent) REQUIRE se.key IS UNIQUE'],
   ['ReadinessSignal.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (rs:ReadinessSignal) REQUIRE rs.key IS UNIQUE'],
   ['ReadinessCohort.key', 'CREATE CONSTRAINT IF NOT EXISTS FOR (rc:ReadinessCohort) REQUIRE rc.key IS UNIQUE'],
+  ['DocumentChunk.chunkId', 'CREATE CONSTRAINT IF NOT EXISTS FOR (dc:DocumentChunk) REQUIRE dc.chunkId IS UNIQUE'],
+  ['EvidenceFact.factId', 'CREATE CONSTRAINT IF NOT EXISTS FOR (ef:EvidenceFact) REQUIRE ef.factId IS UNIQUE'],
+  ['CaseValuation.valuationId', 'CREATE CONSTRAINT IF NOT EXISTS FOR (cv:CaseValuation) REQUIRE cv.valuationId IS UNIQUE'],
+  ['DamageComponent.componentId', 'CREATE CONSTRAINT IF NOT EXISTS FOR (dc:DamageComponent) REQUIRE dc.componentId IS UNIQUE'],
 ];
 
 const INDEXES: Array<[string, string]> = [
@@ -30,6 +34,8 @@ const INDEXES: Array<[string, string]> = [
   ['Case.subStage', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.subStage)'],
   ['Case.phase', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.phase)'],
   ['Case.completionRate', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.completionRate)'],
+  ['Case.workAccidentFlag', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.workAccidentFlag)'],
+  ['Case.clientAge', 'CREATE INDEX IF NOT EXISTS FOR (c:Case) ON (c.clientAge)'],
   ['Contact.name', 'CREATE INDEX IF NOT EXISTS FOR (con:Contact) ON (con.name)'],
   ['Contact.normalizedName', 'CREATE INDEX IF NOT EXISTS FOR (con:Contact) ON (con.normalizedName)'],
   ['Contact.contactType', 'CREATE INDEX IF NOT EXISTS FOR (con:Contact) ON (con.contactType)'],
@@ -44,6 +50,29 @@ const INDEXES: Array<[string, string]> = [
   ['StageEvent.occurredAt', 'CREATE INDEX IF NOT EXISTS FOR (se:StageEvent) ON (se.occurredAt)'],
   ['ReadinessSignal.kind', 'CREATE INDEX IF NOT EXISTS FOR (rs:ReadinessSignal) ON (rs.kind)'],
   ['ReadinessCohort.targetStage', 'CREATE INDEX IF NOT EXISTS FOR (rc:ReadinessCohort) ON (rc.targetStage)'],
+  ['DocumentChunk.caseId', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.caseId)'],
+  ['DocumentChunk.documentId', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.documentId)'],
+  ['DocumentChunk.chunkHash', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.chunkHash)'],
+  ['EvidenceFact.kind', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.kind)'],
+  ['EvidenceFact.caseId', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.caseId)'],
+  ['EvidenceFact.numericValue', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.numericValue)'],
+  ['EvidenceFact.fromDate', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.fromDate)'],
+  ['EvidenceFact.toDate', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.toDate)'],
+  ['EvidenceFact.source', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.source)'],
+  ['EvidenceFact.extractorVersion', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.extractorVersion)'],
+  ['EvidenceFact.chunkHash', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.chunkHash)'],
+  ['CaseValuation.caseId', 'CREATE INDEX IF NOT EXISTS FOR (cv:CaseValuation) ON (cv.caseId)'],
+];
+
+const FULLTEXT_INDEXES: Array<[string, string]> = [
+  [
+    'DocumentChunk.fulltext',
+    'CREATE FULLTEXT INDEX documentChunkFulltext IF NOT EXISTS FOR (dc:DocumentChunk) ON EACH [dc.text, dc.textPreview, dc.summary]',
+  ],
+  [
+    'EvidenceFact.fulltext',
+    'CREATE FULLTEXT INDEX evidenceFactFulltext IF NOT EXISTS FOR (ef:EvidenceFact) ON EACH [ef.label, ef.value, ef.quote]',
+  ],
 ];
 
 export async function ensureGraphSchema(): Promise<void> {
@@ -59,6 +88,11 @@ export async function ensureGraphSchema(): Promise<void> {
     for (const [label, cypher] of INDEXES) {
       await session.run(cypher);
       logger.log(`✓ ${label} index`);
+    }
+    logger.log('\nCreating full-text indexes...');
+    for (const [label, cypher] of FULLTEXT_INDEXES) {
+      await session.run(cypher);
+      logger.log(`✓ ${label} full-text index`);
     }
     logger.log('\nGraph schema initialized');
   } finally {
