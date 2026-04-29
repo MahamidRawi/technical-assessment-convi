@@ -6,10 +6,43 @@ A Neo4j reasoning layer over Mongo legal-case data. Case questions are answered 
 
 ```bash
 npm install
-cp .env.example .env
-npm run setup        # one command, A→Z: Docker Neo4j → clear → schema → ingest → signals → cohorts → similarity
-npm run dev          # starts the Next.js UI at http://localhost:3000
+cp .env.example .env       # then fill in OPENAI_API_KEY (and Vertex if you have it)
+npm run setup              # one command, A→Z: Docker Neo4j → clear → schema → ingest → signals → cohorts → similarity
+npm run dev                # starts the Next.js UI at http://localhost:3000
 ```
+
+## Reviewer / handoff quick start
+
+The repo ships with a populated `.cache/ocr-llm-facts.json` (≈4 MB), which is a deterministic snapshot of every LLM-extracted OCR fact for the assessment Mongo dataset, keyed by `sha256(chunk_text)`. Because the OCR text in Mongo is fixed, every chunk hash is a hit on the next ingest, so `npm run setup` reproduces the full graph **without re-billing OpenAI**.
+
+```bash
+# 1. clone, install, set up env
+npm install
+cp .env.example .env
+# edit .env → set OPENAI_API_KEY (the LLM enrichment uses cache → no spend, but the
+# agent at request time calls OpenAI for chat answers).
+
+# 2. one command — uses the shipped cache, ~5 minutes, $0 of OpenAI on extraction
+npm run setup
+
+# 3. start the UI
+npm run dev
+```
+
+What `npm run setup` does, end-to-end:
+
+1. Brings up local Neo4j in Docker.
+2. Clears the graph and applies the schema (constraints + indexes).
+3. Ingests cases, contacts, documents from Mongo.
+4. Runs the **dual OCR fact extractor** for every `DocumentChunk`:
+   - Deterministic regex pass (fast, free, always runs).
+   - LLM pass (`gpt-4.1-mini`, batched, gated by `ENABLE_LLM_OCR_FACTS`). Reads `.cache/ocr-llm-facts.json` first; only chunks not in the cache call OpenAI.
+5. Builds derived signals, cohorts, and similarity scores.
+6. Runs `npm run verify:graph` to print node/edge counts plus OCR-fact diagnostics (by `kind`, by `source: regex|llm`, by `extractorVersion`, chunk-hash coverage).
+
+If you want to skip the LLM pass entirely (regex-only graph, no OpenAI calls at all during ingest), set `ENABLE_LLM_OCR_FACTS=false` in `.env` before running setup. The `.env.example` ships it `true` because the cache makes it free.
+
+To force a fresh extraction (will hit OpenAI), bump `OCR_LLM_EXTRACTOR_VERSION` in `.env` (e.g. `openai-ocr-v2`); cache keys are versioned, so a bump invalidates every entry.
 
 ## Environment
 
@@ -25,6 +58,16 @@ npm run dev          # starts the Next.js UI at http://localhost:3000
 - `VERTEX_EMBEDDING_MODEL` — Vertex embedding model id (default `text-embedding-004`).
 - `OPENAI_EMBEDDING_MODEL` — OpenAI embedding model id (default `text-embedding-3-small`, returns 768-dim vectors when used by this project).
 - `EMBEDDING_REQUEST_DELAY_MS` — milliseconds to sleep between embedding calls (default `1500`). Lower (e.g. `250`) on a high-quota provider; raise (e.g. `12000`) to stay under a 5-RPM tier.
+
+**OCR LLM enrichment**
+
+- `ENABLE_LLM_OCR_FACTS` — `true` runs an OpenAI pass over every OCR chunk during ingest, in addition to the deterministic regex extractor. Default `false` (regex only).
+- `OPENAI_MODEL` — model id used for OCR enrichment (default `gpt-4.1-mini`). Independent of `LLM_MODEL`, which is the agent's chat model.
+- `OCR_LLM_EXTRACTOR_VERSION` — version stamp persisted on every LLM-derived `EvidenceFact` and used as the cache key prefix (default `openai-ocr-v1`). Bump this to invalidate the file cache and re-run.
+- `OCR_LLM_BATCH_SIZE` — number of chunks sent in a single OpenAI call (default `5`). Cuts wall time and per-call prompt overhead.
+- `OCR_LLM_CONCURRENCY` — number of in-flight OpenAI calls (default `8`). Lower if you hit rate limits, raise on higher-tier accounts.
+- `OCR_LLM_PROGRESS_EVERY` — print a progress line every N chunks (default `25`). Progress always includes elapsed time, ETA, tokens, and an estimated USD cost.
+- `OCR_LLM_PRICE_INPUT_PER_MTOK` / `OCR_LLM_PRICE_OUTPUT_PER_MTOK` — override the built-in price table (USD per 1M tokens) for cost estimates.
 
 **Data stores**
 
@@ -45,15 +88,19 @@ npm run dev          # starts the Next.js UI at http://localhost:3000
 
 ## Model provider
 
-The agent uses `src/llm/provider.ts` instead of binding to a single SDK. `LLM_PROVIDER=vertex` selects Vertex AI; `LLM_PROVIDER=openai` selects the local fallback. Both consume the Vercel AI SDK model interface, so switching providers does not change tool routing, graph reads, or readiness logic.
+The agent uses `src/llm/provider.ts` instead of binding to a single SDK. `LLM_PROVIDER=vertex` selects Vertex AI; `LLM_PROVIDER=openai` selects the local fallback. Both consume the Vercel AI SDK model interface, so switching providers does not change graph reads or readiness logic.
+
+## Agent boundary
+
+The agent is **prompt-guided typed tool selection plus graph-grounded tool execution**. It is not a free-form Cypher generator, and it does not dynamically invent graph queries at runtime. The model chooses from the registered typed tools; the system prompt and tool descriptions explain when to use readiness, OCR evidence, comparable-case, medical-evidence, and valuation tools. There is no regex-based turn policy that forces a scripted tool path.
 
 ## Scripts
 
 | Script                       | What it does                                                                                                                       |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run setup`              | One command, A→Z: Docker Neo4j → clear graph → apply schema → Mongo ingest → signals → cohorts → similarity edges. Idempotent and rerunnable. |
+| `npm run setup`              | One command, A→Z: Docker Neo4j → clear graph → apply schema → Mongo ingest → signals → cohorts → similarity edges → `verify:graph` summary. Idempotent and rerunnable. Set `BOOTSTRAP_SKIP_VERIFY=true` to skip the verify step. |
 | `npm run schema`             | Apply constraints/indexes only (no data changes)                                                                                   |
-| `npm run ingest`             | Re-ingest Mongo and rebuild derived analytics, **without** clearing first (use this for an incremental refresh; use `setup` for clean slate) |
+| `npm run ingest`             | Non-clearing re-ingest: `MERGE`s source data and rebuilds derived analytics. This is rerunnable, but it is **not** true incremental CDC. Use `setup` for a clean slate. |
 | `npm run similarity`         | Recompute `SIMILAR_TO` edges only (uses `SEMANTIC_SIMILARITY_ENABLED` if set)                                                       |
 | `npm run clear`              | Delete all graph data (manual escape hatch)                                                                                        |
 | `npm run dev` / `npm run build` | Next.js UI                                                                                                                       |
@@ -65,12 +112,32 @@ The agent uses `src/llm/provider.ts` instead of binding to a single SDK. `LLM_PR
 | `npm run verify:cohorts`     | Cohort-only view: members, activity-log vs snapshot breakdown, confidence, common signals                                          |
 | `npm run verify:readiness-fix` | Picks a real case + target stage and prints the structured output of the three readiness tools end-to-end                        |
 
+## Submission verification
+
+Run these before handoff:
+
+```bash
+npm run test:unit
+npm run lint
+npm run eval:golden
+npm run test:integration
+```
+
+Expected result: unit tests, lint, golden-eval definition validation, and integration tests pass. `npm run eval:golden` only schema-checks `evals/golden-agent.jsonl` by default; set `RUN_LLM_EVALS=true` to call the live model and score tool sequencing. If the integration runner starts Neo4j before Bolt is ready, rerun `npm run test:integration`; the test suite itself uses an isolated Neo4j on `:7688`.
+
 ## Notes
 
 - Chat is stateless: messages are not persisted between turns.
 - The OpenAI fallback exists so reviewers can run the assessment without a Vertex project.
 - `npm run build` is self-contained (no Google Fonts fetch).
 - Neo4j Browser is reachable at `http://localhost:7474` for ad-hoc graph inspection.
+
+## Reviewer demo path
+
+1. Sparse readiness: `When will case 6938747665d3d3eb1c9967a4 be ready for file_claim?` The correct answer is low-confidence/no-estimate, because `file_claim` has one snapshot-only peer.
+2. OCR evidence: ask for NII, disability, Regulation 15, salary slips, or missing-document evidence. The trace should show `DocumentChunk` / `EvidenceFact` hits with document provenance.
+3. Comparable/value context: ask for comparable work-accident cases with disability evidence or value context. The answer should cite graph facts and report insufficient evidence when filters are too narrow.
+4. Fastest stage timing: ask `Which cases reached file_claim fastest?` or another stage. The tool should expose whether timing came from activity-log transitions or current-stage snapshots.
 
 ## Examples
 
@@ -152,6 +219,19 @@ The agent's answer:
 
 When the data genuinely doesn't support a question, the agent says so rather than hallucinating: `availability: "none"`, `confidence: "low"`, explicit `uncertaintyReasons[]`. Examples 2 and 3 above show this pattern in action.
 
+## LLM OCR enrichment
+
+The OCR pipeline is dual-extractor:
+
+- **Regex extraction is the deterministic baseline** and always runs (`src/pipeline/ingest/ocrFacts.ts`). Each fact is stamped with `source: "regex"` and `extractorVersion: "regex-v1"`.
+- **OpenAI extraction runs only at ingest time** when `ENABLE_LLM_OCR_FACTS=true`. Chunks are batched (default 5 per OpenAI call, see `OCR_LLM_BATCH_SIZE`) and sent to `OPENAI_MODEL` (default `gpt-4.1-mini`) with a strict prompt covering the same 8 `EvidenceFactKind`s the regex extractor produces. Response is validated with Zod *per chunk*: unknown kinds are dropped, quotes are capped to 700 chars, quotes that don't appear in **that chunk's** text are rejected (which doubles as cross-chunk attribution defense), confidence is clamped to `[0, 1]`. LLM facts are stored as the same `EvidenceFact` nodes with `source: "llm"`.
+- **Unchanged chunks are skipped** via a sha256 `chunkHash` on every `DocumentChunk`. The cache file at `.cache/ocr-llm-facts.json` keys by `${OCR_LLM_EXTRACTOR_VERSION}:${chunkHash}`, so re-ingest only calls OpenAI for new or changed chunks. (Neo4j is not the cache because the ingest path delete-then-inserts per document.)
+- **Throughput is tuned with two env vars**, no code changes: `OCR_LLM_BATCH_SIZE` (default 5) and `OCR_LLM_CONCURRENCY` (default 8). Live progress prints elapsed time, rate, ETA, token counts, and an estimated USD cost so you see signs of life on a multi-thousand-chunk corpus.
+- **LLM failures degrade quality, do not break ingest.** Each batch is wrapped in `try/catch`; on failure the regex baseline still lands in the graph and a warning is logged.
+- **Tools don't change.** `searchDocumentEvidence`, `getCaseDocumentFacts`, `searchCasesByMedicalEvidence`, `findComparableCasesByFacts`, and `getCaseValueContext` already query `EvidenceFact`; LLM-derived facts join the same indexes automatically.
+- **Readiness signals now include OCR facts.** `EvidenceFact` nodes emit `evidenceFactKind:*` and `evidenceFactSubtype:*` `ReadinessSignal`s, so document substance can participate in cohort mining and still point back to the originating fact/document/chunk.
+- **Request-time chat still receives only retrieved evidence**, not the corpus. The LLM only ever sees one chunk's text at ingest time, never at request time.
+
 ## Privacy
 
 The most sensitive fields are excluded at the ingest layer and never enter the graph at all: ID numbers, bank account details, and street/house number/postal code. OCR is graph-indexed as `DocumentChunk` nodes plus source-linked `EvidenceFact` nodes so the agent can answer document-substance, disability, NII, missing-document, and value questions from graph queries rather than metadata alone. Full communication bodies are still not modeled; contact phone/email and communication subject/preview are carried into the graph for relational reasoning (dedup, participant edges) and pass through tool traces, local turn logs, and Langfuse exports unredacted.
@@ -169,8 +249,18 @@ The embedding path is deliberately the narrowest: it carries graph-derived facts
 
 ## Tradeoffs
 
-- Readiness is composed from atomic tools the agent picks: pattern derivation, case comparison, timing estimate, timeline, evidence. When a stage is too sparse for a cohort, the tools return a low-confidence sparse-stage fallback rather than throwing.
+- Readiness is composed from atomic tools the model can choose: pattern derivation, case comparison, timing estimate, timeline, evidence. When a stage is too sparse for a cohort, the tools return a low-confidence sparse-stage fallback rather than throwing.
 - Cohort and peer-level timing both filter to activity-log-sourced StageEvents only; below the 3-member floor, `medianDaysToStage` is `null` and `timingStatus: "no_estimate"`. Snapshot-sourced StageEvents are still kept for cohort *membership* and per-row evidence — they just don't drive the aggregate. When the rank tool returns only snapshot rows, the tool surfaces `allTimingFromSnapshotOnly: true` and the agent caveats the answer.
 - Similarity stays explainable through readiness signals; embeddings add `semanticScore` when `SEMANTIC_SIMILARITY_ENABLED=true`.
 - Cohorts require 5 members to form, 12 for medium confidence, 25 for high. When same-type history is thin, the result widens to global and surfaces that context in `uncertaintyReasons`.
 - Insurer canonicalization is heuristic-driven (legal-form suffix stripping over a 7-token stopword set) with a 4-entry override table for edge cases like `ביטוח ישיר` (where `ביטוח` is brand, not suffix) and `המוסד לביטוח לאומי` → `ביטוח לאומי`. Any new insurer that follows the brand+suffix convention auto-canonicalizes without code changes.
+
+## Known limitations
+
+| Limitation | Current behavior |
+|---|---|
+| Sparse stage history | Only a few activity-log rows contain parseable stage transitions, so timing tools prefer activity-log evidence and return `no_estimate` when the peer floor is not met. |
+| `file_claim` has one peer | The system intentionally refuses to fabricate a learned readiness pattern or median for this stage. |
+| Limited OCR ontology | OCR facts cover a bounded set of legal/medical evidence kinds; unknown fact types remain searchable as text chunks but are not extracted as structured facts. |
+| Batch analytics | Ingest is rerunnable and idempotent, but derived signals/cohorts/similarity are rebuilt rather than updated via CDC. |
+| Similarity scale | Signal similarity is explainable, but pairwise recomputation is O(n²); production scale would need candidate generation, persisted embeddings, or ANN/vector indexing. |

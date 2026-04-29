@@ -182,6 +182,44 @@ async function main(): Promise<void> {
       console.log(`  ${pad(String(r.get('kind')), 26)} ${num(r.get('n'))}`);
     }
 
+    console.log('\n=== OCR facts by source ===');
+    const sourceFactRows = await s.run(`
+      MATCH (ef:EvidenceFact)
+      RETURN coalesce(ef.source, '(unset)') AS source, count(*) AS n
+      ORDER BY n DESC
+    `);
+    if (sourceFactRows.records.length === 0) {
+      console.log('  (no OCR-derived facts)');
+    }
+    for (const r of sourceFactRows.records) {
+      console.log(`  ${pad(String(r.get('source')), 26)} ${num(r.get('n'))}`);
+    }
+
+    console.log('\n=== OCR facts by extractor ===');
+    const extractorRows = await s.run(`
+      MATCH (ef:EvidenceFact)
+      RETURN coalesce(ef.extractorVersion, '(unset)') AS extractorVersion, count(*) AS n
+      ORDER BY n DESC
+    `);
+    if (extractorRows.records.length === 0) {
+      console.log('  (no OCR-derived facts)');
+    }
+    for (const r of extractorRows.records) {
+      console.log(`  ${pad(String(r.get('extractorVersion')), 26)} ${num(r.get('n'))}`);
+    }
+
+    console.log('\n=== Chunk hash coverage ===');
+    const hashCoverageRows = await s.run(`
+      MATCH (dc:DocumentChunk)
+      RETURN count(dc) AS total, count(dc.chunkHash) AS withHash
+    `);
+    const coverage = hashCoverageRows.records[0];
+    if (coverage) {
+      console.log(`  total=${num(coverage.get('total'))}  withHash=${num(coverage.get('withHash'))}`);
+    } else {
+      console.log('  (no DocumentChunk nodes)');
+    }
+
     console.log('\n=== OCR / valuation index status ===');
     const indexRows = await s.run(`
       SHOW INDEXES

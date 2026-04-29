@@ -18,7 +18,7 @@ export const sortOrderSchema = z.enum(['asc', 'desc']);
  * pull their valid values from Neo4j at boot. Constructing the schema lazily lets
  * `loadEnumVocabulary()` populate the cache before the first call. See dynamicEnums.ts.
  */
-export function buildInputSchema() {
+function createInputSchema() {
   return z.object({
     caseType: dynamicEnumOptional(
       'caseType',
@@ -152,6 +152,10 @@ export function buildInputSchema() {
         'Max rows to return. For single-result questions use 1-10; for portfolio aggregation (distributions, top-N, counts across all cases) use 100-200 so the agent can tabulate the full set.'
       ),
   });
+}
+
+export function buildInputSchema(): ReturnType<typeof createInputSchema> {
+  return createInputSchema();
 }
 
 export type SearchCasesInputSchema = ReturnType<typeof buildInputSchema>;

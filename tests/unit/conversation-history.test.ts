@@ -85,6 +85,23 @@ test('conversation history preserves assistant tool and data parts', async () =>
   });
 });
 
+test('conversation history trims to CONVERSATION_HISTORY_MAX_MESSAGES', async (t) => {
+  t.after(() => {
+    delete process.env.CONVERSATION_HISTORY_MAX_MESSAGES;
+  });
+  process.env.CONVERSATION_HISTORY_MAX_MESSAGES = '3';
+
+  await withTempHistory(async (filePath) => {
+    for (let i = 0; i < 5; i++) {
+      await appendConversationMessage(userMessage(`u-${i}`, `m${i}`), filePath);
+    }
+    const messages = await readConversationHistory(filePath);
+    assert.equal(messages.length, 3);
+    assert.equal((messages[0]?.parts[0] as { type: string; text?: string }).text, 'm2');
+    assert.equal((messages[2]?.parts[0] as { type: string; text?: string }).text, 'm4');
+  });
+});
+
 test('conversation history clear leaves an empty json database', async () => {
   await withTempHistory(async (filePath) => {
     await appendConversationMessage(userMessage('u-1', 'question'), filePath);

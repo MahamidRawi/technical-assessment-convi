@@ -50,6 +50,32 @@ test('chunk builder prioritizes provided OCR chunks and keeps stable source meta
   assert.equal(chunks[0]?.source, 'processedData.chunks');
   assert.equal(chunks[0]?.gcsUri, 'gs://chunk-1');
   assert.equal(chunks[0]?.pageRange, '1-3');
+  assert.equal(typeof chunks[0]?.chunkHash, 'string');
+  assert.equal(chunks[0]?.chunkHash?.length, 64);
+});
+
+test('chunk hash is stable across whitespace differences', () => {
+  const a = MongoFileSchema.parse({
+    _id: 'doc-h',
+    caseId: 'CASE-1',
+    fileName: 'nii.pdf',
+    processedData: {
+      chunks: [{ chunk_number: 1, extracted_text: 'נכות זמנית 20%' }],
+    },
+  });
+  const b = MongoFileSchema.parse({
+    _id: 'doc-h',
+    caseId: 'CASE-1',
+    fileName: 'nii.pdf',
+    processedData: {
+      chunks: [{ chunk_number: 1, extracted_text: '  נכות זמנית 20%   ' }],
+    },
+  });
+
+  const ha = buildDocumentChunks(a, 'CASE-1')[0]?.chunkHash;
+  const hb = buildDocumentChunks(b, 'CASE-1')[0]?.chunkHash;
+  assert.ok(ha);
+  assert.equal(ha, hb);
 });
 
 test('normalizePageRange accepts string and OCR range object shapes', () => {
@@ -99,6 +125,47 @@ test('parseHebrewDate normalizes supported date formats', () => {
   assert.equal(parseHebrewDate('01/02/2026'), '2026-02-01');
   assert.equal(parseHebrewDate('31-07-25'), '2025-07-31');
   assert.equal(parseHebrewDate('not a date'), null);
+});
+
+test('regex facts are tagged with source="regex", extractorVersion="regex-v1", and the chunk hash', () => {
+  const file = MongoFileSchema.parse({
+    _id: 'doc-r',
+    caseId: 'CASE-2',
+    fileName: 'committee.pdf',
+    processedData: {
+      chunks: [
+        {
+          chunk_number: 1,
+          extracted_text:
+            'הוועדה הרפואית המסכמת קבעה נכות קבועה בשיעור 25% החל מ-01/02/2026. תקנה 15 לא הופעלה.',
+        },
+      ],
+    },
+  });
+  const chunk = buildDocumentChunks(file, 'CASE-2')[0];
+  assert.ok(chunk);
+
+  const regexFacts = extractEvidenceFacts({
+    caseId: 'CASE-2',
+    documentId: 'doc-r',
+    chunkId: chunk.chunkId,
+    text: chunk.text,
+    observedDate: '2026-02-01',
+  }).map((fact) => ({
+    ...fact,
+    source: 'regex' as const,
+    extractorVersion: 'regex-v1',
+    chunkHash: chunk.chunkHash,
+  }));
+
+  assert.ok(regexFacts.length > 0);
+  for (const fact of regexFacts) {
+    assert.equal(fact.source, 'regex');
+    assert.equal(fact.extractorVersion, 'regex-v1');
+    assert.equal(fact.chunkHash, chunk.chunkHash);
+    assert.equal(typeof fact.chunkHash, 'string');
+    assert.equal(fact.chunkHash?.length, 64);
+  }
 });
 
 test('valuation mapper parses compensation, fees, and damage components', () => {

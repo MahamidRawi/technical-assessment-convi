@@ -40,4 +40,10 @@ export async function persistSignalWriteSet(
      MERGE (ae)-[:EMITS_SIGNAL]->(rs)`,
     { rows: writeSet.activityEmitRows }
   );
+  await tx.run(
+    `UNWIND $rows AS row
+     MATCH (fact:EvidenceFact {factId: row.sourceId}), (rs:ReadinessSignal {key: row.signalKey})
+     MERGE (fact)-[:EMITS_SIGNAL]->(rs)`,
+    { rows: writeSet.evidenceFactEmitRows }
+  );
 }

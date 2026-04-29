@@ -15,10 +15,13 @@ const persistedMessageSchema = z.object({
   parts: z.array(messagePartSchema).min(1).max(300),
 });
 
+/** Max messages accepted in JSON on disk and via CONVERSATION_HISTORY_MAX_MESSAGES (ceiling). */
+const HISTORY_FILE_MAX_MESSAGES = 2000;
+
 const historyFileSchema = z
   .object({
     version: z.literal(1),
-    messages: z.array(persistedMessageSchema).max(200),
+    messages: z.array(persistedMessageSchema).max(HISTORY_FILE_MAX_MESSAGES),
   })
   .strict();
 
@@ -32,9 +35,9 @@ export function getConversationHistoryPath(): string {
 }
 
 function getMaxMessages(): number {
-  const parsed = Number(process.env.CONVERSATION_HISTORY_MAX_MESSAGES ?? 40);
-  if (!Number.isFinite(parsed) || parsed < 2) return 40;
-  return Math.min(Math.floor(parsed), 200);
+  const parsed = Number(process.env.CONVERSATION_HISTORY_MAX_MESSAGES ?? 20);
+  if (!Number.isFinite(parsed) || parsed < 2) return 20;
+  return Math.min(Math.floor(parsed), HISTORY_FILE_MAX_MESSAGES);
 }
 
 function trimHistory(messages: UIMessage[]): UIMessage[] {

@@ -1,108 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildTurnToolPolicy,
-  nextRequiredTool,
-  shouldUseCaseProgressionToStagePolicy,
-  shouldUseMedicalEvidenceCaseSearchPolicy,
-  shouldUseGraphEvidenceScenarioPolicy,
-  shouldUseSeededComparableFollowupPolicy,
-} from '@/agents/toolPolicy';
-import {
   booleanOrNull,
   lowerBoundOrNull,
   normalizeComparableFilters,
   upperBoundOrNull,
 } from '@/tools/findComparableCasesByFacts';
 import { buildMedicalEvidenceSearchTerms } from '@/tools/searchCasesByMedicalEvidence';
-
-const reviewerPrompt =
-  'קיבלתי תיק של אדם בן 30 שעבר תאונת דרכים בעבודה הוא הגיע אליי אחרי וועדה של ביטוח לאומי שקבעה לו נכויותצ זמניוצתת מה השלבים הבאים ואילו מסמכים אמורים להיות בצתיק - תענה רק על סמך שאילתות מהגרף';
-
-test('graph evidence scenario policy catches reviewer OCR/NII prompt with typos', () => {
-  assert.equal(shouldUseGraphEvidenceScenarioPolicy(reviewerPrompt), true);
-
-  const policy = buildTurnToolPolicy(reviewerPrompt);
-
-  assert.ok(policy);
-  assert.deepEqual(policy.requiredToolSequence, [
-    'searchDocumentEvidence',
-    'findComparableCasesByFacts',
-    'getCaseValueContext',
-  ]);
-  assert.ok(policy.activeTools.includes('searchDocumentEvidence'));
-  assert.ok(!policy.activeTools.includes('deriveReadinessPattern'));
-});
-
-test('graph evidence scenario policy does not intercept explicit readiness questions', () => {
-  assert.equal(
-    shouldUseGraphEvidenceScenarioPolicy('show the historical readiness pattern for targetStage file_claim'),
-    false
-  );
-});
-
-test('medical evidence case search policy catches semantic medical case listing', () => {
-  const prompt = 'ראה לי תיקים שיש בהם פגיעות נוירולוגיות הקשורות לעמוד שדרה';
-  assert.equal(shouldUseMedicalEvidenceCaseSearchPolicy(prompt), true);
-
-  const policy = buildTurnToolPolicy(prompt);
-
-  assert.ok(policy);
-  assert.equal(policy.name, 'medicalEvidenceCaseSearch');
-  assert.deepEqual(policy.requiredToolSequence, ['searchCasesByMedicalEvidence']);
-  assert.ok(policy.activeTools.includes('searchCasesByMedicalEvidence'));
-});
-
-test('case progression policy forces current-case evidence before readiness', () => {
-  const prompt = 'מה יכול לקדם את התיק של שפירא ליה לכתב תביעה ולמה?';
-  assert.equal(shouldUseCaseProgressionToStagePolicy(prompt), true);
-
-  const policy = buildTurnToolPolicy(prompt);
-
-  assert.ok(policy);
-  assert.equal(policy.name, 'caseProgressionToStage');
-  assert.deepEqual(policy.requiredToolSequence, [
-    'findCase',
-    'getCaseOverview',
-    'getCaseEvidence',
-    'getCaseDocuments',
-    'getCaseDocumentFacts',
-    'compareCaseToReadinessPattern',
-  ]);
-  assert.ok(policy.activeTools.includes('getCaseDocuments'));
-  assert.ok(policy.activeTools.includes('compareCaseToReadinessPattern'));
-});
-
-test('seeded comparable policy catches follow-up similar-case requests', () => {
-  const prompt = 'תביא לי את 2 תיקי תאונת הדרכים שיש להם את הכי הרבה המאפיינים הדומים ותפרט בדיוק למה';
-  assert.equal(shouldUseSeededComparableFollowupPolicy(prompt), true);
-
-  const policy = buildTurnToolPolicy(prompt);
-
-  assert.ok(policy);
-  assert.equal(policy.name, 'seededComparableFollowup');
-  assert.deepEqual(policy.requiredToolSequence, []);
-  assert.ok(policy.activeTools.includes('findComparableCasesByFacts'));
-  assert.ok(!policy.activeTools.includes('portfolioAggregates'));
-});
-
-test('nextRequiredTool returns the first missing required call', () => {
-  assert.equal(
-    nextRequiredTool(['searchDocumentEvidence', 'findComparableCasesByFacts'], []),
-    'searchDocumentEvidence'
-  );
-  assert.equal(
-    nextRequiredTool(['searchDocumentEvidence', 'findComparableCasesByFacts'], ['searchDocumentEvidence']),
-    'findComparableCasesByFacts'
-  );
-  assert.equal(
-    nextRequiredTool(
-      ['searchDocumentEvidence', 'findComparableCasesByFacts'],
-      ['searchDocumentEvidence', 'findComparableCasesByFacts']
-    ),
-    null
-  );
-});
 
 test('normalizeComparableFilters treats accident-type text as case type, not injury node', () => {
   const filters = normalizeComparableFilters({

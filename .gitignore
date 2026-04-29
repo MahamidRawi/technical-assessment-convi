@@ -25,6 +25,16 @@ build/
 .turbo/
 tmp/
 temp/
+# OCR LLM extraction cache is shipped with the repo so a fresh `npm run setup`
+# does not re-bill OpenAI for already-processed chunks. The cache is keyed by
+# sha256(chunk text), so if the underlying Mongo OCR is identical, every entry
+# is a hit and ingest costs $0.
+!.cache/
+!.cache/ocr-llm-facts.json
+# But DO NOT commit chat history or anything else that lands in .cache/.
+.cache/conversation-history.json
+.cache/*.log
+.cache/*.tmp
 
 # OS files
 .DS_Store

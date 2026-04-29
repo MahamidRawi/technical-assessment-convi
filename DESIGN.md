@@ -23,6 +23,7 @@ graph LR
   Case -->|HAS_CLIENT| Contact
   Case -->|HAS_CONTACT| Contact
   Case -->|HAS_DOCUMENT| Document
+  Case -->|HAS_EVIDENCE_FACT| EvidenceFact
   Case -->|HAS_COMMUNICATION| Communication
   Case -->|HAS_ACTIVITY| ActivityEvent
   Case -->|HAS_STAGE_EVENT| StageEvent
@@ -37,7 +38,11 @@ graph LR
   Document -->|OF_CATEGORY| DocumentCategory
   Document -->|OF_TYPE| DocumentType
   Document -->|DERIVED_FROM| Document
+  Document -->|HAS_CHUNK| DocumentChunk
+  Document -->|SUPPORTS_FACT| EvidenceFact
+  DocumentChunk -->|SUPPORTS_FACT| EvidenceFact
   Document -->|EMITS_SIGNAL| ReadinessSignal
+  EvidenceFact -->|EMITS_SIGNAL| ReadinessSignal
   Communication -->|FROM_CONTACT / TO_CONTACT / CC_CONTACT| Contact
   Communication -->|EMITS_SIGNAL| ReadinessSignal
   ActivityEvent -->|EMITS_SIGNAL| ReadinessSignal
@@ -57,6 +62,8 @@ graph LR
 | `Case`             | `sourceId`   | Center of the graph; every reasoning path starts here                              |
 | `Contact`          | `dedupKey`   | Same person appears across cases and communications; deduped by name+role+contact  |
 | `Document`         | `sourceId`   | Each file is evidence; readiness signals must point back to specific file IDs      |
+| `DocumentChunk`    | `chunkId`    | Bounded OCR text unit; avoids prompting over whole files and preserves page/source context |
+| `EvidenceFact`     | `factId`     | Extracted OCR fact with provenance and confidence; now also emits readiness signals |
 | `Communication`    | `sourceId`   | Has direction, participants, timing; all distinct facts                            |
 | `Stage`            | `name`       | Shared concept across cases, events, and cohorts; needed for traversal             |
 | `StageEvent`       | `key`        | Reaching a stage is timestamped evidence, not a label                              |
@@ -103,6 +110,30 @@ OCR content is modeled below `Document`, not on `Case` or `Document`.
 Every fact links back to both the document and chunk that support it.
 *Rejected:* prompting over full OCR blobs; the agent receives concise snippets
 and source-linked facts only.
+
+`DocumentChunk` carries a sha256 `chunkHash` of the normalized text
+(whitespace-collapsed) so re-ingest can skip unchanged chunks. `EvidenceFact`
+carries `source` (`regex` | `llm`), `extractorVersion`, and `chunkHash` so the
+graph can answer "where did this fact come from, and was the extractor up to
+date?" without re-reading the source document.
+
+`EvidenceFact` also emits readiness signals:
+`evidenceFactKind:<kind>` and, when present,
+`evidenceFactSubtype:<kind>:<subtype>`. This keeps OCR-derived substance in
+the same cohort-mining path as document categories, communications, activity,
+injuries, and insurers while preserving the fact → chunk → document provenance
+chain.
+
+**Dual extraction.** A deterministic regex pass (`source="regex"`,
+`extractorVersion="regex-v1"`) is the baseline and always runs. When
+`ENABLE_LLM_OCR_FACTS=true`, an OpenAI pass (`source="llm"`,
+`extractorVersion="openai-ocr-v1"`) runs at ingest with bounded concurrency
+(default 8) and a sha256-keyed file cache at `.cache/ocr-llm-facts.json`. LLM output
+is Zod-validated per fact: kind ∈ allowed set, quote capped to 700 chars,
+quote must approximately appear in the chunk text, confidence clamped to
+`[0,1]`. Regex wins on collision so the deterministic baseline stays
+canonical; LLM-only facts are appended. Failures fall back to regex with a
+warning rather than breaking ingest.
 
 ### Communication
 
@@ -156,7 +187,7 @@ inspect `side` first; the typed edge is faster and the schema documents intent.
 field; it's a fact a cohort can be measured against. Ten signal kinds:
 `documentCategory`, `documentType`, `communicationDirection`,
 `communicationParty`, `activity`, `caseType`, `injury`, `bodyPart`, `insurer`,
-`contactRole`. (Stage transitions are modeled as `StageEvent` nodes plus
+`contactRole`, `evidenceFactKind`, `evidenceFactSubtype`. (Stage transitions are modeled as `StageEvent` nodes plus
 `REACHED_STAGE` edges, not as readiness signals.)
 *Rejected:* JSON blob of signals on Case; must be traversable, comparable,
 and explainable via `EMITS_SIGNAL`.
@@ -188,6 +219,7 @@ components, and provenance to caveat value answers honestly.
 | `Case -[OUR_EXPERT/COURT_EXPERT]-> Expert`                                                     | Side determines meaning. Generic `HAS_EXPERT` forces every query to filter on `side` first                                                   |
 | `Case -[REACHED_STAGE { at }]-> Stage`                                                         | Direct reachability shortcut on top of the longer `HAS_STAGE_EVENT → FOR_STAGE` path; some queries need a fast "did this case ever reach X?" |
 | `Document -[EMITS_SIGNAL]-> ReadinessSignal`                                                   | Auditability. Without it, the agent can claim a signal matched but cannot show *which document* proved it                                    |
+| `EvidenceFact -[EMITS_SIGNAL]-> ReadinessSignal`                                               | Lets OCR-derived substance participate in cohort mining while preserving fact/chunk/document provenance                                      |
 | `ReadinessCohort -[COMMON_SIGNAL { support, lift, weight, medianLeadDays }]-> ReadinessSignal` | Stores observed strength so the agent reasons from data, not from rule weights                                                               |
 | `Case -[SIMILAR_TO { score, signalScore, semanticScore, reasons }]-> Case`                     | Combined similarity (Jaccard over readiness signals + cosine over case-summary embeddings); reasons array is human-readable                  |
 
@@ -320,11 +352,12 @@ for each signal observed in members:
    keep iff support ≥ 0.6 AND lift ≥ 1.5, top 12 by weight
 ```
 
-**Cohort selection at query time** prefers same-`caseType` if `n ≥ 12`, else
-falls back to global. When same-type is thin (`6 ≤ n < 12`) we widen *and*
-emit `sameTypeThinContextUsed` so the artifact's `uncertaintyReasons[]`
-explains the widening. This avoids a hard cliff between "perfect cohort" and
-"no cohort."
+**Cohort selection at query time** prefers same-`caseType` once it reaches
+`MIN_COHORT_SIZE = 5`; otherwise it falls back to the global cohort when one
+exists. When same-type history is thin but still informative
+(`3 ≤ n < 5` with the current constants), the tools surface
+`sameTypeThinContextUsed` so `uncertaintyReasons[]` explains that same-type
+context was observed but not strong enough to own the estimate.
 
 **Honest current state on this dataset.** With `MIN_COHORT_SIZE = 5`, seven
 cohorts form, but sparse stages remain sparse. The example PDF stage
@@ -377,13 +410,15 @@ once an eval set with stable ground truth exists.
 
 ## 12. The agent
 
-**Tools, not pipelines.** The system registers 19 atomic tools by default
+**Prompt-guided tools, not dynamic Cypher.** The system registers 19 atomic tools by default
 (plus `getCaseGraphContext` when `AGENT_ADVANCED_TOOLS=true`): resolve
 case, fetch overview (with experts), search, list portfolio contacts /
 experts, derive readiness pattern, compare to pattern, estimate time to
-stage, rank by transition time, benchmark, etc. The model chooses; we
-don't script. Tool inputs and outputs are typed with Zod, so the agent
-gets a well-defined contract per tool.
+stage, rank by transition time, benchmark, etc. The agent does not generate
+arbitrary Cypher. There is no regex turn policy that forces a scripted path;
+the model chooses from the registered typed tools, guided by the system prompt
+and tool descriptions for readiness, OCR evidence, comparable cases, medical
+evidence, and valuation questions.
 
 **Composition by observation, not orchestration.** The
 `ReadinessArtifactComposer` watches tool results and assembles a
@@ -498,7 +533,17 @@ to fabricate a behind-by-N number, surfaces both the cohort gap and the
 timing-source gap explicitly, and points the user at the underlying evidence
 through the trace's evidence chips.
 
-## 15. Tradeoffs we accepted
+## 15. Known limitations
+
+| Limitation | Current behavior |
+| ---------- | ---------------- |
+| Sparse stage history | Only 3 activity-log rows have parseable stage transitions, so timing medians require activity-log peers and otherwise return `no_estimate`. |
+| `file_claim` has one peer | The graph cannot learn a real claim-letter readiness pattern from this dataset; the agent reports low confidence instead of inventing one. |
+| Limited OCR ontology | OCR facts cover a bounded set of evidence kinds. Other text remains searchable as `DocumentChunk` content but is not extracted into typed facts. |
+| Batch analytics | `npm run ingest` is rerunnable and non-clearing, but derived signals, cohorts, and similarity are rebuilt rather than maintained by CDC. |
+| O(n²) similarity | Pairwise similarity is explainable and fine for 70 cases; production scale needs candidate generation, persisted embeddings, or vector/ANN indexing. |
+
+## 16. Tradeoffs we accepted
 
 
 | Tradeoff                                                                                                                               | Why we accepted                                                                                                                                                                                                                                                 |
@@ -511,7 +556,7 @@ through the trace's evidence chips.
 | Communication body content stays in Mongo, not in graph                                                                                | OCR document text is graph-indexed as chunks/facts; communication bodies still stay out of graph storage except for `textPreview` (≤500 chars) on Communication                                                                                                  |
 
 
-## 16. What I'd do with more time
+## 17. What I'd do with more time
 
 Things I would build next, ranked by leverage:
 

@@ -52,11 +52,15 @@ const INDEXES: Array<[string, string]> = [
   ['ReadinessCohort.targetStage', 'CREATE INDEX IF NOT EXISTS FOR (rc:ReadinessCohort) ON (rc.targetStage)'],
   ['DocumentChunk.caseId', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.caseId)'],
   ['DocumentChunk.documentId', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.documentId)'],
+  ['DocumentChunk.chunkHash', 'CREATE INDEX IF NOT EXISTS FOR (dc:DocumentChunk) ON (dc.chunkHash)'],
   ['EvidenceFact.kind', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.kind)'],
   ['EvidenceFact.caseId', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.caseId)'],
   ['EvidenceFact.numericValue', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.numericValue)'],
   ['EvidenceFact.fromDate', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.fromDate)'],
   ['EvidenceFact.toDate', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.toDate)'],
+  ['EvidenceFact.source', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.source)'],
+  ['EvidenceFact.extractorVersion', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.extractorVersion)'],
+  ['EvidenceFact.chunkHash', 'CREATE INDEX IF NOT EXISTS FOR (ef:EvidenceFact) ON (ef.chunkHash)'],
   ['CaseValuation.caseId', 'CREATE INDEX IF NOT EXISTS FOR (cv:CaseValuation) ON (cv.caseId)'],
 ];
 

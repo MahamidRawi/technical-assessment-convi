@@ -10,7 +10,7 @@ export interface SignalObservation extends SignalDef {
   caseId: string;
   observedAt: string | null;
   sourceKind: string;
-  emitLabel?: 'Document' | 'Communication' | 'ActivityEvent';
+  emitLabel?: 'Document' | 'Communication' | 'ActivityEvent' | 'EvidenceFact';
   emitSourceId?: string;
 }
 
@@ -34,6 +34,7 @@ export interface SignalWriteSet {
   documentEmitRows: SignalEmitWriteRow[];
   communicationEmitRows: SignalEmitWriteRow[];
   activityEmitRows: SignalEmitWriteRow[];
+  evidenceFactEmitRows: SignalEmitWriteRow[];
 }
 
 export interface CypherWriteRunner {

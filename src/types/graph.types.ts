@@ -173,6 +173,7 @@ export interface DocumentChunkNode {
   gcsUri: string | null;
   charCount: number;
   source: string;
+  chunkHash?: string;
 }
 
 export interface EvidenceFactNode {
@@ -192,6 +193,9 @@ export interface EvidenceFactNode {
   confidence: number;
   quote: string;
   metadata: string | null;
+  source?: 'regex' | 'llm';
+  extractorVersion?: string;
+  chunkHash?: string;
 }
 
 export interface CaseValuationNode {

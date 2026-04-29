@@ -64,7 +64,7 @@ export interface ComparableCasesByFactsResult {
  * values from the live graph at boot — `loadEnumVocabulary()` populates the cache before
  * the first call. See `_shared/dynamicEnums.ts`.
  */
-export function buildComparableCasesInputSchema() {
+function createComparableCasesInputSchema() {
   return z.object({
     caseId: z
       .string()
@@ -88,6 +88,10 @@ export function buildComparableCasesInputSchema() {
     ),
     limit: z.number().int().min(1).max(30).default(10),
   });
+}
+
+export function buildComparableCasesInputSchema(): ReturnType<typeof createComparableCasesInputSchema> {
+  return createComparableCasesInputSchema();
 }
 
 export type ComparableCasesInputSchema = ReturnType<typeof buildComparableCasesInputSchema>;

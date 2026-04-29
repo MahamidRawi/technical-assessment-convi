@@ -19,6 +19,8 @@ import { searchDocumentEvidenceTool } from '@/tools/searchDocumentEvidence';
 import { getCaseDocumentFactsTool } from '@/tools/getCaseDocumentFacts';
 import { findComparableCasesByFactsTool } from '@/tools/findComparableCasesByFacts';
 import { getCaseValueContextTool } from '@/tools/getCaseValueContext';
+import { collectSignalObservations } from '@/pipeline/analytics/signals/extract';
+import { buildSignalWriteSet } from '@/pipeline/analytics/signals/build';
 import { persistSignalWriteSet } from '@/pipeline/analytics/signals/persist';
 import { persistCohortWriteSet } from '@/pipeline/analytics/cohorts/persist';
 import type { SignalWriteSet } from '@/pipeline/analytics/signals/types';
@@ -341,6 +343,7 @@ test(
       documentEmitRows: [],
       communicationEmitRows: [],
       activityEmitRows: [],
+      evidenceFactEmitRows: [],
     };
     const emptyCohorts: CohortWriteSet = { cohortRows: [], memberRows: [], signalRows: [] };
     const session = createSession();
@@ -383,6 +386,24 @@ test(
   async () => {
     await resetFixture();
     await seedOcrValueFixture();
+
+    const session = createSession();
+    try {
+      const observations = await collectSignalObservations(session);
+      const writeSet = buildSignalWriteSet(observations);
+      await session.executeWrite((tx) => persistSignalWriteSet(tx, writeSet));
+      const result = await session.run(`
+        MATCH (:Case {caseId: 'CASE-TARGET'})
+          -[:HAS_SIGNAL]->(rs:ReadinessSignal)<-[:EMITS_SIGNAL]-
+          (:EvidenceFact {factId: 'fact:target:disability'})
+        RETURN collect(rs.key) AS keys
+      `);
+      const keys = result.records[0]?.get('keys') as string[];
+      assert.ok(keys.includes('evidenceFactKind:disability_period'));
+      assert.ok(keys.includes('evidenceFactSubtype:disability_period:temporary'));
+    } finally {
+      await session.close();
+    }
 
     const evidence = await searchDocumentEvidenceTool.execute({
       query: 'תקנה 15 נכות',
